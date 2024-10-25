@@ -5,5 +5,7 @@
 Mot_de_passe* pass_query(int ID){
     printf("pour quel site est ce mot de passe?\n");
     Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
-    
+    scanf("%s",&ptr->Site);
+    printf("Quel est votre login pour ce password?\n");
+    scanf("%s",&ptr->Login);
 }
