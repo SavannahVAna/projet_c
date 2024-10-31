@@ -27,3 +27,5 @@ int aes_encrypt (const unsigned char *plaintext, int plaintext_len, const unsign
 int aes_decrypt (const unsigned char *ciphertext, int cipherlen, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext);
 void sha1_hash(const char *input, unsigned int inputlen, unsigned char *output, unsigned int *output_length);
 int hex_to_bin(const char* hex_string, unsigned char* bin_output);
+void encrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
+void decrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
