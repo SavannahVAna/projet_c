@@ -22,7 +22,6 @@ void pass_decypher(Mot_de_passe* ptr);
 Mot_de_passe* pass_modify(Mot_de_passe* ptr);
 void pass_delete(Mot_de_passe* ptr);
 Mot_de_passe* pass_search();
-void main_menu();
 int aes_encrypt (const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext);
 int aes_decrypt (const unsigned char *ciphertext, int cipherlen, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext);
 void sha1_hash(const char *input, unsigned int inputlen, unsigned char *output, unsigned int *output_length);

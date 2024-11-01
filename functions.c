@@ -5,6 +5,7 @@
 #include <string.h>
 #include <openssl/rand.h>
 #include <time.h>
+#include <unistd.h>
 
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin){
     printf("pour quel site est ce mot de passe?\n");
@@ -303,6 +304,8 @@ Mot_de_passe* select_mdp(Mot_de_passe* head, int idex){
     }
     return head;
 }
+
+//I WILL TREAT HER BETTER THTAN YOU EVER WILL JUSTE YOU WATCH
 
 Mot_de_passe* recup_list(FILE* fiel) {
     Mot_de_passe* head = NULL;
