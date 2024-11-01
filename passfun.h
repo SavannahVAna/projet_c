@@ -14,7 +14,11 @@ typedef struct AEScipher {
 	unsigned char key[16];
 } AEScipher;
 
+typedef struct cipher {
+	unsigned char IV[16];
+} ij_vc;
 
+ij_vc* get_cipher(FILE* fp);
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin);
 
 void pass_cypher(Mot_de_passe* ptr);

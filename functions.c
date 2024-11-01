@@ -141,6 +141,24 @@ void decryptfromfile(){
 	fclose(file);
 }
 
+ij_vc* get_cipher(FILE* fp) {
+    // Allocation de mémoire pour un nouvel objet ij_vc
+    ij_vc* new_node = (ij_vc*)malloc(sizeof(ij_vc));
+    if (new_node == NULL) {
+        perror("Memory allocation failed");
+        return NULL; // Retourner NULL en cas d'échec d'allocation
+    }
+
+    // Lecture d'un objet de type ij_vc dans new_node
+    if (fread(new_node, sizeof(ij_vc), 1, fp) != 1) {
+        perror("Failed to read structure from file");
+        free(new_node);  // Libération de la mémoire en cas d'échec de lecture
+        return NULL;
+    }
+    fclose(fp);
+    return new_node;  // Retourner le pointeur vers la structure lue
+}
+
 int hex_to_bin(const char* hex_string, unsigned char* bin_output) {
     	int len = strlen(hex_string);
     	int bin_len = len / 2; 
@@ -334,5 +352,47 @@ Mot_de_passe* recup_list(FILE* fiel) {
     }
 
     fclose(fiel);
+    return head; 
+}
+
+void enregister(Mot_de_passe* mdp, FILE* file){
+    Mot_de_passe* ptr = mdp->ptr;
+    while(ptr != NULL){
+        fwrite(ptr, sizeof(Mot_de_passe), 1, file);
+        ptr = ptr->ptr;
+    }
+    fclose(file);
+}
+
+Mot_de_passe* read_file(FILE* file){
+    Mot_de_passe* head = NULL;  // Tête de la liste
+    Mot_de_passe* prev = NULL;  // Pointeur vers le nœud précédent
+    Mot_de_passe temp;
+
+  
+    while (fread(&temp, sizeof(Mot_de_passe), 1, file) == 1) {
+        
+        Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
+        if (new_node == NULL) {
+            perror("Memory allocation failed");
+            fclose(file);
+            return head; 
+        }
+
+        
+        *new_node = temp;  
+        new_node->ptr = NULL;  
+
+        
+        if (head == NULL) {
+            head = new_node;
+        } else {
+            prev->ptr = new_node;  
+        }
+
+        prev = new_node;  
+    }
+
+    fclose(file);
     return head; 
 }
