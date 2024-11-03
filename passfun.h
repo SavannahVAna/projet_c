@@ -20,7 +20,7 @@ typedef struct cipher {
 
 ij_vc* get_cipher(FILE* fp);
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin);
-
+Mot_de_passe* recup_list(FILE* fiel);
 void pass_cypher(Mot_de_passe* ptr);
 void pass_decypher(Mot_de_passe* ptr);
 Mot_de_passe* pass_modify(Mot_de_passe* ptr);
@@ -28,7 +28,8 @@ void pass_delete(Mot_de_passe* ptr);
 Mot_de_passe* pass_search();
 int aes_encrypt (const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext);
 int aes_decrypt (const unsigned char *ciphertext, int cipherlen, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext);
-void sha1_hash(const char *input, unsigned int inputlen, unsigned char *output, unsigned int *output_length);
+void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *output);
 int hex_to_bin(const char* hex_string, unsigned char* bin_output);
 void encrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
 void decrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
+void affiche_mdp(Mot_de_passe* mdp);

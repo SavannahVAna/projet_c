@@ -86,17 +86,19 @@ int aes_decrypt (const unsigned char *ciphertext, int cipherlen, const unsigned 
 
 }
 
-void sha1_hash(const char *input, unsigned int inputlen, unsigned char *output, unsigned int *output_length) {
+void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *output) {
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    if (!ctx) {
+        printf("Erreur lors de l'initialisation du contexte SHA1\n");
+        return;
+    }
 
-	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-	if (!ctx) { printf("Failed to allocate context\n"); return; }
-	
-	const EVP_MD *md = EVP_sha1();
-	EVP_DigestInit_ex(ctx, md, NULL);
-	EVP_DigestUpdate(ctx, input, inputlen);
-	EVP_DigestFinal_ex(ctx, output, output_length);
-	EVP_MD_CTX_free(ctx);
+    const EVP_MD *md = EVP_sha1();
+    EVP_DigestInit_ex(ctx, md, NULL);
+    EVP_DigestUpdate(ctx, input, input_len);
+    EVP_DigestFinal_ex(ctx, output, NULL);
 
+    EVP_MD_CTX_free(ctx);
 }
 
 void decryptfromfile(){
@@ -301,7 +303,7 @@ void affiche_mdp(Mot_de_passe* mdp){
 
 	strftime(date_str, 100, "%d/%m/%Y %H:%M:%S", local_time);
     strftime(date_str2, 100, "%d/%m/%Y %H:%M:%S", local_time2);
-	printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %d\nsite : %s\nlogin : %s\npassword : %s\ncommentaires : %s", mdp->ID, date_str, date_str2,mdp->Site, mdp->Login, mdp->Password, mdp->Commentaire);
+	printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %d\nsite : %s\nlogin : %s\ncommentaires : %s", mdp->ID, date_str, date_str2,mdp->Site, mdp->Login, mdp->Commentaire);
 	free(date_str);
     free(date_str2);
 }
