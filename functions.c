@@ -318,8 +318,9 @@ void affiche_list(Mot_de_passe* mdp){
 	
 }
 
-Mot_de_passe* select_mdp(Mot_de_passe* head, int idex){
-	 while (head != NULL && head->ID != idex){
+Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex){
+    Mot_de_passe* head =hea;
+	while (head != NULL && head->ID != idex){
         head = head->ptr;
     }
     return head;

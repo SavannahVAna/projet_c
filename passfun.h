@@ -33,3 +33,5 @@ int hex_to_bin(const char* hex_string, unsigned char* bin_output);
 void encrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
 void decrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]);
 void affiche_mdp(Mot_de_passe* mdp);
+Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex);
+void delpasswd(Mot_de_passe* psw);
