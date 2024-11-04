@@ -399,3 +399,58 @@ Mot_de_passe* read_file(FILE* file){
     fclose(file);
     return head; 
 }
+
+Mot_de_passe* delpasswd(Mot_de_passe* psw, Mot_de_passe* first) {
+    if (first == NULL || psw == NULL) {
+        return first; // Rien à supprimer si la liste est vide ou si l'élément est NULL
+    }
+
+    // Cas où l'élément à supprimer est le premier élément de la liste
+    if (first == psw) {
+        Mot_de_passe* new_first = first->ptr; // Nouveau début de liste
+        free(first);                          // Libération de l'élément
+        return new_first;                     // Retourne le nouveau premier élément
+    }
+
+    // Recherche de l'élément avant celui à supprimer
+    Mot_de_passe* search = first;
+    while (search->ptr != psw && search->ptr != NULL) {
+        search = search->ptr;
+    }
+
+    // Si l'élément est trouvé dans la liste
+    if (search->ptr == psw) {
+        search->ptr = psw->ptr;  // Contourner l'élément à supprimer
+        free(psw);               // Libération de l'élément
+    }
+
+    return first;  // Retourne la tête de la liste, inchangée si `psw` n'était pas le premier
+}
+
+void modify_pswd(Mot_de_passe* mdp){
+    affiche_mdp(mdp);
+    printf("\nque voulez vous modifier?\n1 : login\n2 : password\n3 : site\4 : commentaire\n");
+    int h;
+    scanf(" %d", &h);
+    switch (h)
+    {
+    case 1:
+        printf("entrez votre nouveau login\n");
+        scanf("%s", mdp->Login);
+        break;
+    case 2:
+        printf("entrez le nouvea password\n");
+        scanf("%s", mdp->Password);
+        break;
+    case 3:
+        printf("entree le nouveau nom de site\n");
+        scanf("%s", mdp->Site);
+        break;
+    case 4 :
+        printf("entrez le nouveai commentaire\n");
+        scanf("%s", mdp->Commentaire);
+        break;
+    }
+    time(&mdp->modif);
+    affiche_mdp(mdp);
+}
