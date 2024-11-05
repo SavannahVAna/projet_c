@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        decrypt(fp, fdecrypted, key, ivpointer->IV);
+        aes_decrypt_file(fp, fdecrypted, key, ivpointer->IV);
         fclose(fdecrypted);
         fclose(fp);
 
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
         if (ivpointer) free(ivpointer);
         return 1;
     }
-    encrypt(fdecrypted, fp, key, ivpointer->IV);
+    aes_encrypt_file(fdecrypted, fp, key, ivpointer->IV);
 
     // Libération des ressources
     liberer_mots_de_passe(first);

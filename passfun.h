@@ -1,7 +1,7 @@
 #include <stdio.h>    // pour FILE
 #include <stddef.h> 
 #include <time.h>
-
+#define AES_BLOCK_SIZE 16
 typedef struct mdp Mot_de_passe;
 
 typedef struct mdp{
@@ -40,3 +40,5 @@ Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex);
 Mot_de_passe* delpasswd(Mot_de_passe* psw, Mot_de_passe* first);
 void modify_pswd(Mot_de_passe* mdp);
 void enregister(Mot_de_passe* mdp, FILE* file);
+int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv);
+int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv);
