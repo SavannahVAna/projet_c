@@ -8,8 +8,6 @@
 #include <unistd.h>
 
 int main(int argc, char* argv[]) {
-    (void) argc; // Supprime les avertissements pour les paramètres non utilisés
-    (void) argv;
 
     FILE* fp = NULL;
     unsigned char pass[16];
@@ -17,41 +15,78 @@ int main(int argc, char* argv[]) {
     unsigned char key[16];
     int dabet = 0;
     Mot_de_passe* scdptr;
-    ij_vc* ivpointer;
+    ij_vc* ivpointer = NULL;  // Initialisation à NULL pour éviter un double free potentiel
     FILE *fdecrypted;
     Mot_de_passe* first = NULL;
     FILE* fiv;
 
-    if (access("crypted", F_OK) == 0) {  // Vérifie si le fichier "crypted" existe
+    // Vérification si le fichier crypted existe
+    if (access("crypted", F_OK) == 0) {
         fp = fopen("crypted", "rb");
         fiv = fopen("IV", "rb");
-        printf("welcome to DR_Hash, enter your password to continue: ");
-        scanf("%15s", pass); // Limite l'entrée à 15 caractères pour éviter les dépassements de buffer
+        
+        if (fp == NULL || fiv == NULL) {
+            fprintf(stderr, "Erreur : impossible d'ouvrir les fichiers cryptés.\n");
+            return 1;
+        }
+        
+        printf("Bienvenue dans DR_Hash, entrez votre mot de passe pour continuer : ");
+        scanf("%15s", pass); // Limite à 15 caractères
 
         ivpointer = get_cipher(fiv);
+        if (ivpointer == NULL) {
+            fprintf(stderr, "Erreur : IV non récupéré correctement.\n");
+            fclose(fiv);
+            return 1;
+        }
+
+        printf("IV récupéré : ");
+        for (int i = 0; i < 16; i++) {
+            printf("%02x", ivpointer->IV[i]);
+        }
+        printf("\n");
+        
+
         sha1_hash((const unsigned char *)pass, strlen((const char *)pass), key);
+        printf("Clé SHA1 : ");
+        for (int i = 0; i < 16; i++) {
+            printf("%02x", key[i]);
+        }
+        printf("\n");
 
         fdecrypted = fopen("decrypted", "wb");
+        if (fdecrypted == NULL) {
+            fprintf(stderr, "Erreur : impossible de créer le fichier décrypté.\n");
+            fclose(fp);
+            return 1;
+        }
+
         decrypt(fp, fdecrypted, key, ivpointer->IV);
         fclose(fdecrypted);
         fclose(fp);
-        fclose(fiv);
 
         fdecrypted = fopen("decrypted", "rb");
+        if (fdecrypted == NULL) {
+            fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour lecture.\n");
+            return 1;
+        }
+        
         first = recup_list(fdecrypted);
-        fclose(fdecrypted);
+        
     }
 
     int loop = 1;
     int input;
     char slect;
+
     if (first != NULL) {
         dabet = first->ID + 1;
     }
+
     affiche_mdp(first);
 
     while (loop) {
-        printf("menu:\n l to list all entries\n s to select an entry\n c to create a new entry\n q to quit\n");
+        printf("menu:\n l pour lister toutes les entrées\n s pour sélectionner une entrée\n c pour créer une nouvelle entrée\n q pour quitter\n");
         scanf(" %c", &slect);
 
         switch (slect) {
@@ -60,11 +95,12 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 's':
-                printf("Enter the number of the entry you want to select: ");
-                scanf("%d", &input); // Utilise &input pour passer l'adresse
+                printf("Entrez le numéro de l'entrée que vous souhaitez sélectionner : ");
+                scanf("%d", &input);
+
                 scdptr = select_mdp(first, input);
 
-                printf("What would you like to do? d to delete / m to modify\n");
+                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier\n");
                 scanf(" %c", &slect);
 
                 if (slect == 'd') {
@@ -72,7 +108,7 @@ int main(int argc, char* argv[]) {
                 } else if (slect == 'm') {
                     modify_pswd(scdptr);
                 }
-                break; // Ajout de `break` pour éviter la chute
+                break;
 
             case 'c':
                 dabet++;
@@ -87,30 +123,67 @@ int main(int argc, char* argv[]) {
 
     // Sauvegarde des données en clair
     fdecrypted = fopen("decrypted", "wb");
+    if (fdecrypted == NULL) {
+        fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour écriture.\n");
+        liberer_mots_de_passe(first);
+        if (ivpointer) free(ivpointer);
+        return 1;
+    }
     enregister(first, fdecrypted);
-    fclose(fdecrypted);
 
     // Chiffrement des données
     if (access("crypted", F_OK) != 0) {  // Si le fichier "crypted" n'existe pas encore
-        printf("Enter a password: ");
-        scanf("%15s", pass);  // Limite à 15 caractères
+        printf("Entrez un mot de passe : ");
+        scanf("%15s", pass);
 
         RAND_bytes(buffer, 16);
         ivpointer = (ij_vc*) malloc(sizeof(ij_vc));
+        if (ivpointer == NULL) {
+            fprintf(stderr, "Erreur d'allocation de mémoire pour ivpointer.\n");
+            liberer_mots_de_passe(first);
+            return 1;
+        }
+        
         sha1_hash((const unsigned char *)buffer, 16, ivpointer->IV);
 
         fiv = fopen("IV", "wb");
+        if (fiv == NULL) {
+            fprintf(stderr, "Erreur : impossible de créer le fichier IV.\n");
+            free(ivpointer);
+            liberer_mots_de_passe(first);
+            return 1;
+        }
         fwrite(ivpointer, sizeof(ij_vc), 1, fiv);
-        fclose(fiv); // Écrit l'IV dans un fichier
+        fclose(fiv);
 
         sha1_hash((const unsigned char *)pass, strlen((const char *)pass), key);
+        printf("IV récupéré : ");
+        for (int i = 0; i < 16; i++) {
+            printf("%02x", ivpointer->IV[i]);
+        }
+        printf("\n");
+        printf("Clé SHA1 : ");
+        for (int i = 0; i < 16; i++) {
+            printf("%02x", key[i]);
+        }
+        printf("\n");
     }
 
     fp = fopen("crypted", "wb");
     fdecrypted = fopen("decrypted", "rb");
+    if (fp == NULL || fdecrypted == NULL) {
+        fprintf(stderr, "Erreur : impossible d'ouvrir les fichiers pour le chiffrement.\n");
+        if (fp) fclose(fp);
+        if (fdecrypted) fclose(fdecrypted);
+        liberer_mots_de_passe(first);
+        if (ivpointer) free(ivpointer);
+        return 1;
+    }
     encrypt(fdecrypted, fp, key, ivpointer->IV);
 
-    fclose(fp);
-    fclose(fdecrypted);
-    free(ivpointer); // Libère la mémoire allouée pour ivpointer
+    // Libération des ressources
+    liberer_mots_de_passe(first);
+    if (ivpointer) free(ivpointer);
+    
+    return 0;
 }

@@ -24,6 +24,7 @@ typedef struct cipher {
 	unsigned char IV[16];
 } ij_vc;
 
+void liberer_mots_de_passe(Mot_de_passe* liste);
 ij_vc* get_cipher(FILE* fp);
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin);
 Mot_de_passe* recup_list(FILE* fiel);
