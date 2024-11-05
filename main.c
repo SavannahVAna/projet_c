@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         dabet = first->ID + 1;
     }
 
-    affiche_mdp(first);
+    affiche_list(first);
 
     while (loop) {
         printf("menu:\n l pour lister toutes les entrées\n s pour sélectionner une entrée\n c pour créer une nouvelle entrée\n q pour quitter\n");
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 
         switch (slect) {
             case 'l':
-                affiche_mdp(first);
+                affiche_list(first);
                 break;
 
             case 's':
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
                 scanf("%d", &input);
 
                 scdptr = select_mdp(first, input);
-
+                affiche_mdp(scdptr);
                 printf("Que voulez-vous faire ? d pour supprimer / m pour modifier\n");
                 scanf(" %c", &slect);
 
@@ -184,6 +184,6 @@ int main(int argc, char* argv[]) {
     // Libération des ressources
     liberer_mots_de_passe(first);
     if (ivpointer) free(ivpointer);
-    
+    remove("decrypted");
     return 0;
 }

@@ -9,86 +9,35 @@
 
 
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
-    printf("pour quel site est ce mot de passe?\n");
+    printf("Pour quel site est ce mot de passe ?\n");
     Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
     if (ptr == NULL) {
         perror("Erreur d'allocation de mémoire");
         return NULL;
     }
-    scanf("%s", ptr->Site);
-    printf("Quel est votre login pour ce password?\n");
-    scanf("%s", ptr->Login);
-    printf("tapez votre mdp\n");
-    scanf("%s", ptr->Password);
-    printf("commentaires?\n");
-    scanf("%s", ptr->Commentaire);
+
+    // Sécurisation des saisies
+    printf("Site : ");
+    scanf("%49s", ptr->Site);  // Limite à 49 caractères pour laisser place au '\0'
+    
+    printf("Login : ");
+    scanf("%29s", ptr->Login);
+    
+    printf("Mot de passe : ");
+    scanf("%29s", ptr->Password);
+    
+    printf("Commentaires : ");
+    scanf("%255s", ptr->Commentaire);
+
     ptr->ptr = ancin;
     ptr->ID = ID;
+
     time(&ptr->creation);
     time(&ptr->modif);
+
     return ptr;
 }
 
-int aes_encrypt (const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext) {
-	EVP_CIPHER_CTX *ctx;
-	int len;
-	int ciphertext_len;
-
-	if (!(ctx = EVP_CIPHER_CTX_new())) {
-		printf("Error initializing AES context. \n");
-		return -1;
-	}
-	if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)){
-		printf("Error initializing AES encryption. \n");
-		return -1;
-	}
-
-	if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) {
-		printf("Erruro during AES encryption. \n");
-		return -1;
-	}
-	ciphertext_len = len;
-
-	if (1!= EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
-		printf("Erruro finalizing AES encryption. \n");
-		return -1;
-	}
-	ciphertext_len += len;
-	EVP_CIPHER_CTX_free(ctx);
-	return ciphertext_len;
-
-}
-
-
-int aes_decrypt (const unsigned char *ciphertext, int cipherlen, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext) {
-	EVP_CIPHER_CTX *ctx;
-	int len;
-	int ciphertext_len;
-
-	if (!(ctx = EVP_CIPHER_CTX_new())) {
-		printf("Error initializing AES context. \n");
-		return -1;
-	}
-	if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv)){
-		printf("Error initializing AES decryption. \n");
-		return -1;
-	}
-
-	if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, cipherlen)) {
-		printf("Erruro during AES decryption. \n");
-		return -1;
-	}
-	ciphertext_len = len;
-
-	if (1!= EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
-		printf("Erruro finalizing AES decryption. \n");
-		return -1;
-	}
-	ciphertext_len += len;
-	EVP_CIPHER_CTX_free(ctx);
-	return ciphertext_len;
-
-}
 
 void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *output) {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -123,186 +72,6 @@ ij_vc* get_cipher(FILE* fp) {
     return new_node;  // Retourner le pointeur vers la structure lue
 }
 
-int hex_to_bin(const char* hex_string, unsigned char* bin_output) {
-    	int len = strlen(hex_string);
-    	int bin_len = len / 2; 
-
-    	for (int i = 0; i < bin_len; i++) {
-        	sscanf(hex_string + 2*i, "%2hhx", &bin_output[i]);
-    	}
-	return bin_len;
-}
-
-void encrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]) {
-    // Obtenir la taille du fichier
-    fseek(ifp, 0L, SEEK_END);
-    size_t fsize = ftell(ifp);  // Changer 'int' en 'size_t'
-    // Remettre le pointeur de fichier au début
-    fseek(ifp, 0L, SEEK_SET);
-
-    size_t outLen1 = 0, outLen2 = 0;  // Changer 'int' en 'size_t'
-    unsigned char *indata = malloc(fsize);
-    unsigned char *outdata = malloc(fsize + AES_BLOCK_SIZE); // Prendre en compte le rembourrage potentiel
-
-    // Lire le fichier
-    size_t bytesRead = fread(indata, sizeof(char), fsize, ifp); // Utiliser size_t pour bytesRead
-    if (bytesRead != fsize) {
-        fprintf(stderr, "Erreur lors de la lecture du fichier d'entrée.\n");
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Créer et initialiser le contexte de chiffrement
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new(); // Allocation dynamique
-    if (ctx == NULL) {
-        fprintf(stderr, "Erreur lors de l'allocation du contexte de chiffrement.\n");
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Initialiser le chiffrement
-    if (EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv) != 1) {
-        fprintf(stderr, "Erreur lors de l'initialisation du chiffrement.\n");
-        EVP_CIPHER_CTX_free(ctx); // Libérer le contexte
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Chiffrement
-    if (EVP_EncryptUpdate(ctx, outdata, (int*)&outLen1, indata, (int)fsize) != 1) {  // Cast explicite ici
-        fprintf(stderr, "Erreur lors du chiffrement.\n");
-        EVP_CIPHER_CTX_free(ctx); // Libérer le contexte
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    if (EVP_EncryptFinal_ex(ctx, outdata + outLen1, (int*)&outLen2) != 1) {  // Cast explicite ici
-        fprintf(stderr, "Erreur lors de la finalisation du chiffrement.\n");
-        EVP_CIPHER_CTX_free(ctx); // Libérer le contexte
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Écrire le résultat dans le fichier de sortie
-    size_t bytesWritten = fwrite(outdata, sizeof(char), outLen1 + outLen2, ofp); // Utiliser size_t pour bytesWritten
-    if (bytesWritten != outLen1 + outLen2) {
-        fprintf(stderr, "Erreur lors de l'écriture des données dans le fichier de sortie.\n");
-        free(indata);
-        free(outdata);
-        EVP_CIPHER_CTX_free(ctx);
-        return;
-    }
-
-    // Nettoyage
-    EVP_CIPHER_CTX_free(ctx); // Libérer le contexte
-    free(indata);
-    free(outdata);
-}
-
-
-
-void decrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]) {
-    fseek(ifp, 0L, SEEK_END);
-    size_t fsize = ftell(ifp);
-    fseek(ifp, 0L, SEEK_SET);
-
-    if (fsize <= 0) {
-        fprintf(stderr, "Taille de fichier invalide.\n");
-        return;
-    }
-
-    unsigned char *indata = malloc(fsize);
-    unsigned char *outdata = malloc(fsize);
-
-    if (indata == NULL || outdata == NULL) {
-        fprintf(stderr, "Erreur d'allocation de mémoire.\n");
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    size_t bytesRead = fread(indata, sizeof(char), fsize, ifp);  // Lire le fichier chiffré
-    if (bytesRead != fsize) {
-        fprintf(stderr, "Erreur lors de la lecture du fichier chiffré.\n");
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Afficher les données lues pour vérifier leur contenu
-    printf("Données lues du fichier chiffré : ");
-    for (size_t i = 0; i < bytesRead; i++) {
-        printf("%02x", indata[i]);
-    }
-    printf("\n");
-
-    // Vérifiez si la clé et l'IV sont corrects (loggez-les pour vérifier)
-    printf("Clé utilisée : ");
-    for (size_t i = 0; i < 16; i++) {
-        printf("%02x", key[i]);
-    }
-    printf("\n");
-
-    printf("IV utilisé : ");
-    for (size_t i = 0; i < 16; i++) {
-        printf("%02x", iv[i]);
-    }
-    printf("\n");
-
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    if (ctx == NULL) {
-        fprintf(stderr, "Erreur lors de l'allocation du contexte de déchiffrement.\n");
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    if (EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv) != 1) {
-        fprintf(stderr, "Erreur lors de l'initialisation du déchiffrement.\n");
-        EVP_CIPHER_CTX_free(ctx);
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    int outLen1 = 0, outLen2 = 0;
-    if (EVP_DecryptUpdate(ctx, outdata, &outLen1, indata, (int)bytesRead) != 1) {
-        fprintf(stderr, "Erreur lors du déchiffrement.\n");
-        EVP_CIPHER_CTX_free(ctx);
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Finalisation du déchiffrement
-    if (EVP_DecryptFinal_ex(ctx, outdata + outLen1, &outLen2) != 1) {
-        fprintf(stderr, "Erreur lors de la finalisation du déchiffrement. Vérifiez la clé ou le fichier crypté.\n");
-        EVP_CIPHER_CTX_free(ctx);
-        free(indata);
-        free(outdata);
-        return;
-    }
-
-    // Écrire les données décryptées dans le fichier de sortie
-    size_t bytesWritten = fwrite(outdata, sizeof(char), outLen1 + outLen2, ofp);
-    if (bytesWritten != (size_t)(outLen1 + outLen2)) {
-        fprintf(stderr, "Erreur lors de l'écriture des données dans le fichier de sortie.\n");
-    }
-
-    printf("Déchiffrement réussi, taille des données déchiffrées : %d\n", outLen1 + outLen2);
-
-    // Libération de la mémoire
-    EVP_CIPHER_CTX_free(ctx);
-    free(indata);
-    free(outdata);
-}
-
-
 
 void liberer_mots_de_passe(Mot_de_passe* liste) {
     Mot_de_passe* courant;
@@ -318,15 +87,15 @@ void affiche_mdp(Mot_de_passe* mdp) {
         fprintf(stderr, "Erreur : Le pointeur vers Mot_de_passe est NULL.\n");
         return;
     }
-    
-    // Récupération des temps de création et de modification
+
+    // Conversion de la date de création
     struct tm* local_time = localtime(&mdp->creation);
     if (local_time == NULL) {
         fprintf(stderr, "Erreur lors de la conversion de time_t en struct tm.\n");
         return;
     }
 
-    char date_str[100]; 
+    // Conversion de la date de modification
     struct tm* local_time2 = localtime(&mdp->modif);
     if (local_time2 == NULL) {
         fprintf(stderr, "Erreur lors de la conversion de time_t en struct tm.\n");
@@ -334,7 +103,9 @@ void affiche_mdp(Mot_de_passe* mdp) {
     }
 
     // Formatage des dates
+    char date_str[100]; 
     strftime(date_str, sizeof(date_str), "%d/%m/%Y %H:%M:%S", local_time);
+
     char date_str2[100]; 
     strftime(date_str2, sizeof(date_str2), "%d/%m/%Y %H:%M:%S", local_time2);
 
@@ -367,69 +138,44 @@ Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex){
 Mot_de_passe* recup_list(FILE* fiel) {
     Mot_de_passe* head = NULL;
     Mot_de_passe* prev = NULL;
-    Mot_de_passe temp;
+    Mot_de_passe* new_node;
 
-    while (fread(&temp, sizeof(Mot_de_passe), 1, fiel) == 1) {
-        Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
+    while (1) {
+        new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
         if (new_node == NULL) {
             perror("Memory allocation failed");
-            // Libération de la mémoire déjà allouée en cas d'erreur
-            while (head != NULL) {
-                Mot_de_passe* to_free = head;
-                head = head->ptr;
-                free(to_free);
-            }
             fclose(fiel);
-            return NULL; // Retourner NULL en cas de problème d'allocation
+            return head;  
         }
-        
-        // Copier les informations lues dans le nouveau noeud
-        *new_node = temp;  
+        if (fread(new_node, sizeof(Mot_de_passe), 1, fiel) != 1) {
+            free(new_node);  
+            break; // Exit if no more entries to read
+        }
         new_node->ptr = NULL;  
 
-        // Si la liste est vide, ce nouvel élément devient la tête
+        printf("Récupération ID: %d, Site: %s\n", new_node->ID, new_node->Site);
+
         if (head == NULL) {
             head = new_node;
         } else {
             prev->ptr = new_node;  
         }
-
         prev = new_node;  
     }
-
     fclose(fiel);
     return head; 
 }
 
 
+
 void enregister(Mot_de_passe* mdp, FILE* file) {
-    // Vérification si le fichier est NULL
-    if (file == NULL) {
-        fprintf(stderr, "Erreur : le fichier est NULL.\n");
-        return;
+    Mot_de_passe* ptr1 = mdp;
+    while (ptr1 != NULL) {
+        printf("Enregistrement ID: %d, Site: %s\n", ptr1->ID, ptr1->Site);
+        fwrite(ptr1, sizeof(Mot_de_passe), 1, file);
+        ptr1 = ptr1->ptr;
     }
-
-    // Vérification si mdp est NULL
-    if (mdp == NULL) {
-        fprintf(stderr, "Erreur : le pointeur mdp est NULL.\n");
-        fclose(file);
-        return;
-    }
-
-    Mot_de_passe* ptr = mdp; // Commence à partir du mdp principal
-
-    // Écriture de la structure dans le fichier
-    while (ptr != NULL) {
-        size_t written = fwrite(ptr, sizeof(Mot_de_passe), 1, file);
-        if (written != 1) {
-            fprintf(stderr, "Erreur lors de l'écriture dans le fichier.\n");
-            fclose(file);
-            return;
-        }
-        ptr = ptr->ptr; // Passe au prochain Mot_de_passe
-    }
-
-    fclose(file); // Ferme le fichier une fois l'écriture terminée
+    fclose(file);
 }
 
 
@@ -525,14 +271,13 @@ void modify_pswd(Mot_de_passe* mdp) {
             return;
     }
 
-    // Mise à jour de la date de modification
-    if (time(&mdp->modif) == -1) {
-        perror("Erreur lors de la mise à jour de la date de modification");
-    }
+    // Mise à jour de la date de modification uniquement
+    time(&mdp->modif);
 
     // Afficher les informations mises à jour
     affiche_mdp(mdp);
 }
+
 
 int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv) {
     EVP_CIPHER_CTX *ctx;
