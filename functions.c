@@ -7,22 +7,26 @@
 #include <time.h>
 #include <unistd.h>
 
-Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin){
+
+Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     printf("pour quel site est ce mot de passe?\n");
     Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
-    scanf("%s",ptr->Site);
+    if (ptr == NULL) {
+        perror("Erreur d'allocation de mémoire");
+        return NULL;
+    }
+    scanf("%s", ptr->Site);
     printf("Quel est votre login pour ce password?\n");
-    scanf("%s",ptr->Login);
-    printf("tappez votre mdp\n");
-    scanf("%s",ptr->Password);
-	printf("commendtaires?\n");
-	scanf("%s", ptr->Commentaire);
+    scanf("%s", ptr->Login);
+    printf("tapez votre mdp\n");
+    scanf("%s", ptr->Password);
+    printf("commentaires?\n");
+    scanf("%s", ptr->Commentaire);
     ptr->ptr = ancin;
     ptr->ID = ID;
     time(&ptr->creation);
     time(&ptr->modif);
     return ptr;
-
 }
 
 int aes_encrypt (const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext) {
@@ -99,48 +103,6 @@ void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *outp
     EVP_DigestFinal_ex(ctx, output, NULL);
 
     EVP_MD_CTX_free(ctx);
-}
-
-void decryptfromfile(){
-
-	FILE *file = NULL;
-	file = fopen("key.log","rb");
-	if (file == NULL){
-		printf("Impossible to open file. It either don't exist or has a problem.");
-		return;
-	}
-	
-	int byte;
-    	while ((byte = fgetc(file)) == 0x00) {
-   	}
-	fseek(file,-1,SEEK_CUR);
-	AEScipher *aescipher = (AEScipher*) malloc(sizeof(AEScipher));
-	memset(aescipher,0,sizeof(AEScipher));
-	if (fread(aescipher,sizeof(AEScipher),1,file) != 1) {
-		free(aescipher);
-		printf("No AES structure in this file.\n");
-	}
-	
-	char cipher[500];
-	printf("Enter cipher : ");
-	fgets(cipher,500,stdin);
-	cipher[strcspn(cipher,"\n")] = 0;
-
-	unsigned char cipherbin[strlen(cipher)/2];
-	unsigned int cipherlen = hex_to_bin(cipher,cipherbin);
-	unsigned char plain[strlen(cipher)];
-	
-	print_hexa(aescipher->IV,16);
-	print_hexa(aescipher->key,16);
-	int plainlen = aes_decrypt(cipherbin,cipherlen,aescipher->key,aescipher->IV,(unsigned char*)plain);
-	
-	if (plainlen!=-1){
-		printf("PlainLen = %d\n",plainlen);
-       	printf("Message (hex) : "); print_hexa(plain,plainlen);
-		printf("\nMessage (raw) : %s\n",plain);
-	}	
-	free(aescipher);
-	fclose(file);
 }
 
 ij_vc* get_cipher(FILE* fp) {
@@ -287,26 +249,22 @@ void decrypt(FILE *ifp, FILE *ofp, unsigned char key[], unsigned char iv[]) {
     free(outdata);
 }
 
-void affiche_mdp(Mot_de_passe* mdp){
-	struct tm* local_time = localtime(&mdp->creation);
-    char* date_str = (char*)malloc(100 * sizeof(char)); 
-     if (date_str == NULL) {
-        perror("Erreur d'allocation de mémoire");
-        return;
-    }
+void affiche_mdp(Mot_de_passe* mdp) {
+    // Récupération des temps de création et de modification
+    struct tm* local_time = localtime(&mdp->creation);
+    char date_str[100]; 
     struct tm* local_time2 = localtime(&mdp->modif);
-    char* date_str2 = (char*)malloc(100 * sizeof(char)); 
-     if (date_str == NULL) {
-        perror("Erreur d'allocation de mémoire");
-        return;
-    }
+    char date_str2[100]; 
 
-	strftime(date_str, 100, "%d/%m/%Y %H:%M:%S", local_time);
-    strftime(date_str2, 100, "%d/%m/%Y %H:%M:%S", local_time2);
-	printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %d\nsite : %s\nlogin : %s\ncommentaires : %s", mdp->ID, date_str, date_str2,mdp->Site, mdp->Login, mdp->Commentaire);
-	free(date_str);
-    free(date_str2);
+    // Formatage des dates
+    strftime(date_str, sizeof(date_str), "%d/%m/%Y %H:%M:%S", local_time);
+    strftime(date_str2, sizeof(date_str2), "%d/%m/%Y %H:%M:%S", local_time2);
+
+    // Affichage des informations du mot de passe
+    printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s",
+           mdp->ID, date_str, date_str2, mdp->Site, mdp->Login, mdp->Commentaire);
 }
+
 
 void affiche_list(Mot_de_passe* mdp){
 	Mot_de_passe* tmp = mdp;
@@ -427,30 +385,43 @@ Mot_de_passe* delpasswd(Mot_de_passe* psw, Mot_de_passe* first) {
     return first;  // Retourne la tête de la liste, inchangée si `psw` n'était pas le premier
 }
 
-void modify_pswd(Mot_de_passe* mdp){
+void modify_pswd(Mot_de_passe* mdp) {
     affiche_mdp(mdp);
-    printf("\nque voulez vous modifier?\n1 : login\n2 : password\n3 : site\4 : commentaire\n");
+    printf("\nQue voulez-vous modifier?\n1 : Login\n2 : Password\n3 : Site\n4 : Commentaire\n");
+    
     int h;
-    scanf(" %d", &h);
-    switch (h)
-    {
-    case 1:
-        printf("entrez votre nouveau login\n");
-        scanf("%s", mdp->Login);
-        break;
-    case 2:
-        printf("entrez le nouvea password\n");
-        scanf("%s", mdp->Password);
-        break;
-    case 3:
-        printf("entree le nouveau nom de site\n");
-        scanf("%s", mdp->Site);
-        break;
-    case 4 :
-        printf("entrez le nouveai commentaire\n");
-        scanf("%s", mdp->Commentaire);
-        break;
+    if (scanf(" %d", &h) != 1) {
+        printf("Entrée non valide.\n");
+        return;
     }
-    time(&mdp->modif);
+
+    switch (h) {
+        case 1:
+            printf("Entrez votre nouveau login (max 29 caractères) :\n");
+            scanf("%29s", mdp->Login);
+            break;
+        case 2:
+            printf("Entrez le nouveau password (max 29 caractères) :\n");
+            scanf("%29s", mdp->Password);
+            break;
+        case 3:
+            printf("Entrez le nouveau nom de site (max 49 caractères) :\n");
+            scanf("%49s", mdp->Site);
+            break;
+        case 4:
+            printf("Entrez le nouveau commentaire (max 255 caractères) :\n");
+            scanf("%255s", mdp->Commentaire);
+            break;
+        default:
+            printf("Option non valide.\n");
+            return;
+    }
+
+    // Mise à jour de la date de modification
+    if (time(&mdp->modif) == -1) {
+        perror("Erreur lors de la mise à jour de la date de modification");
+    }
+
+    // Afficher les informations mises à jour
     affiche_mdp(mdp);
 }
