@@ -373,9 +373,16 @@ Mot_de_passe* recup_list(FILE* fiel) {
         Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
         if (new_node == NULL) {
             perror("Memory allocation failed");
+            // Libération de la mémoire déjà allouée en cas d'erreur
+            while (head != NULL) {
+                Mot_de_passe* to_free = head;
+                head = head->ptr;
+                free(to_free);
+            }
             fclose(fiel);
-            return head;  // Retourner la liste partielle en cas de problème d'allocation
+            return NULL; // Retourner NULL en cas de problème d'allocation
         }
+        
         // Copier les informations lues dans le nouveau noeud
         *new_node = temp;  
         new_node->ptr = NULL;  
@@ -394,37 +401,37 @@ Mot_de_passe* recup_list(FILE* fiel) {
     return head; 
 }
 
-void enregister(Mot_de_passe* mdp, FILE* file){
-  
-    Mot_de_passe* ptr1 = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
-    if (ptr1 == NULL) {
-        perror("Erreur d'allocation de mémoire");
-        return NULL;
-    }
-    
-    char e[] = "errroorrroror";
-    strncpy(ptr1->Site, e, sizeof(ptr1->Site) - 1); // Copie la chaîne dans Site, en s'assurant de ne pas dépasser la taille
-    ptr1->Site[sizeof(ptr1->Site) - 1] = '\0'; // Ajouter un '\0' à la fin au cas où la chaîne serait trop longue
-    
-    strncpy(ptr1->Login, e, sizeof(ptr1->Login) - 1); 
-    ptr1->Login[sizeof(ptr1->Login) - 1] = '\0'; 
-   
-    strncpy(ptr1->Password, e, sizeof(ptr1->Password) - 1); 
-    ptr1->Password[sizeof(ptr1->Password) - 1] = '\0'; 
-    strncpy(ptr1->Commentaire, e, sizeof(ptr1->Commentaire) - 1); 
-    ptr1->Commentaire[sizeof(ptr1->Commentaire) - 1] = '\0'; 
-    ptr1->ptr = mdp;
-    ptr1->ID = mdp->ID +1;
-    time(&ptr1->creation);
-    time(&ptr1->modif);
 
-    Mot_de_passe* ptr0 = ptr1 ->ptr;
-    while(ptr0 != NULL){
-        fwrite(ptr0, sizeof(Mot_de_passe), 1, file);
-        ptr0 = ptr0->ptr;
+void enregister(Mot_de_passe* mdp, FILE* file) {
+    // Vérification si le fichier est NULL
+    if (file == NULL) {
+        fprintf(stderr, "Erreur : le fichier est NULL.\n");
+        return;
     }
-    fclose(file);
+
+    // Vérification si mdp est NULL
+    if (mdp == NULL) {
+        fprintf(stderr, "Erreur : le pointeur mdp est NULL.\n");
+        fclose(file);
+        return;
+    }
+
+    Mot_de_passe* ptr = mdp; // Commence à partir du mdp principal
+
+    // Écriture de la structure dans le fichier
+    while (ptr != NULL) {
+        size_t written = fwrite(ptr, sizeof(Mot_de_passe), 1, file);
+        if (written != 1) {
+            fprintf(stderr, "Erreur lors de l'écriture dans le fichier.\n");
+            fclose(file);
+            return;
+        }
+        ptr = ptr->ptr; // Passe au prochain Mot_de_passe
+    }
+
+    fclose(file); // Ferme le fichier une fois l'écriture terminée
 }
+
 
 Mot_de_passe* read_file(FILE* file){
     Mot_de_passe* head = NULL;  // Tête de la liste
