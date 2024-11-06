@@ -54,6 +54,11 @@ void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *outp
     EVP_MD_CTX_free(ctx);
 }
 
+void show_password(Mot_de_passe* ps){
+    printf("password for the selected entry is : ");
+    printf("%s\n",ps->Password);
+}
+
 ij_vc* get_cipher(FILE* fp) {
     // Allocation de mémoire pour un nouvel objet ij_vc
     ij_vc* new_node = (ij_vc*)malloc(sizeof(ij_vc));
@@ -88,31 +93,33 @@ void affiche_mdp(Mot_de_passe* mdp) {
         return;
     }
 
+    // Affichage direct des valeurs de time_t pour le débogage
+    printf("Valeur brute de la date de création: %ld\n", mdp->creation);
+    printf("Valeur brute de la date de modification: %ld\n", mdp->modif);
+
     // Conversion de la date de création
     struct tm* local_time = localtime(&mdp->creation);
-    if (local_time == NULL) {
-        fprintf(stderr, "Erreur lors de la conversion de time_t en struct tm.\n");
+    char* date_str = (char*)malloc(100 * sizeof(char)); 
+     if (date_str == NULL) {
+        perror("Erreur d'allocation de mémoire");
         return;
     }
-
-    // Conversion de la date de modification
     struct tm* local_time2 = localtime(&mdp->modif);
-    if (local_time2 == NULL) {
-        fprintf(stderr, "Erreur lors de la conversion de time_t en struct tm.\n");
+    char* date_str2 = (char*)malloc(100 * sizeof(char)); 
+    if (date_str2 == NULL) {
+        perror("Erreur d'allocation de mémoire");
         return;
     }
-
-    // Formatage des dates
-    char date_str[100]; 
-    strftime(date_str, sizeof(date_str), "%d/%m/%Y %H:%M:%S", local_time);
-
-    char date_str2[100]; 
-    strftime(date_str2, sizeof(date_str2), "%d/%m/%Y %H:%M:%S", local_time2);
+    strftime(date_str, 100, "%d/%m/%Y %H:%M:%S", local_time);
+    strftime(date_str2, 100, "%d/%m/%Y %H:%M:%S", local_time2);
 
     // Affichage des informations du mot de passe
     printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s\n",
            mdp->ID, date_str, date_str2, mdp->Site, mdp->Login, mdp->Commentaire);
+    free(date_str);
+    free(date_str2);
 }
+
 
 
 void affiche_list(Mot_de_passe* mdp){

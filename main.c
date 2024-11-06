@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
                 scdptr = select_mdp(first, input);
                 affiche_mdp(scdptr);
-                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier\n");
+                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to show password\n");
                 scanf(" %c", &slect);
 
                 if (slect == 'd') {
@@ -108,6 +108,11 @@ int main(int argc, char* argv[]) {
                 } else if (slect == 'm') {
                     modify_pswd(scdptr);
                 }
+                else if (slect = 'h')
+                {
+                    show_password(scdptr);
+                }
+                
                 break;
 
             case 'c':

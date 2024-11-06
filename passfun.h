@@ -10,8 +10,8 @@ typedef struct mdp{
     char Password[30];
     char Site[50];
     char Commentaire[256];
-    time_t creation;
-    time_t modif;
+    long int creation;
+    long int modif;
     Mot_de_passe* ptr;
 } Mot_de_passe;
 
@@ -20,6 +20,7 @@ typedef struct cipher {
 	unsigned char IV[16];
 } ij_vc;
 
+void show_password(Mot_de_passe* ps);
 void affiche_list(Mot_de_passe* mdp);
 void liberer_mots_de_passe(Mot_de_passe* liste);
 ij_vc* get_cipher(FILE* fp);
