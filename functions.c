@@ -7,11 +7,13 @@
 #include <time.h>
 #include <unistd.h>
 
-void copy_to_clipboard(const char *arr) {
+void copy_to_clipboard(const char *arr) {//fonction pour copier le mot de passe dans le presse papier
     char command[1024];
+    //on regarde quel os parce que les commandes diffèrent en fonction
+    //attention j'ai pas testé pour windows et mac
     #if defined(_WIN32) || defined(_WIN64)
         if (OpenClipboard(NULL)) {
-        // Vider le presse-papiers avant de copier de nouvelles données
+        
         EmptyClipboard();
 
         // Créer une handle de mémoire globale
@@ -32,7 +34,7 @@ void copy_to_clipboard(const char *arr) {
             SetClipboardData(CF_TEXT, hGlobal);
         }
 
-        // Fermer le presse-papiers
+       
         CloseClipboard();
     } else {
         printf("Erreur lors de l'ouverture du presse-papiers.\n");
@@ -53,7 +55,7 @@ void copy_to_clipboard(const char *arr) {
             if (strstr(buffer, "Microsoft") || strstr(buffer, "WSL")) {
                 snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", arr);
                 system(command);
-            } else {
+            } else {//sinon c'est linux normal
                 snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", arr);
                 system(command);
             }
@@ -64,7 +66,7 @@ void copy_to_clipboard(const char *arr) {
     #endif
 }
 
-Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
+Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {//fonction pour demander a l'utilisateur de creer un mot de passe
     char t;
     printf("Voulez vous génerer un mot de passe aléatoire? y/n\n");
     scanf(" %c", &t);
@@ -72,7 +74,7 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     if(t =='y'){
         rand = 1;
     }
-    Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
+    Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));//création de la struct
     if (ptr == NULL) {
         perror("Erreur d'allocation de mémoire");
         return NULL;
@@ -80,7 +82,7 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
 
     // Sécurisation des saisies
     printf("Site : ");
-    scanf("%49s", ptr->Site);  // Limite à 49 caractères pour laisser place au '\0'
+    scanf("%49s", ptr->Site);  
     
     printf("Login : ");
     scanf("%29s", ptr->Login);
@@ -88,7 +90,7 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
         printf("Mot de passe : ");
         scanf("%29s", ptr->Password);
     }
-    else{
+    else{//si l'utilisateur a choisi l'option random password
         random_passwd(ptr);
     }
     
@@ -98,14 +100,14 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     ptr->ptr = ancin;
     ptr->ID = ID;
 
-    time_t cre;  // Correction : déclaration d'un time_t simple
+    time_t cre;  
 
-    time(&cre);  // Correction : passer l'adresse de cre
+    time(&cre); 
 
-    // Obtenir la représentation en struct tm du temps actuel
+    
     struct tm* local_time = localtime(&cre);
 
-    // Assurez-vous que ptr->creation est un tableau de caractères de taille adéquate (e.g., char creation[20]; dans la structure)
+    //trnasformation des dates en string parce que en time_t ça marche pas quand on veut changer uniqueemtn la date de modif jsp pourquoi
     strftime(ptr->creation, sizeof(ptr->creation), "%d/%m/%Y %H:%M:%S", local_time);
     strftime(ptr->modif, sizeof(ptr->modif), "%d/%m/%Y %H:%M:%S", local_time);
 
@@ -113,7 +115,7 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
 }
 
 
-void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *output) {
+void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *output) {//fonction pour hasher en sha1
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     if (!ctx) {
         printf("Erreur lors de l'initialisation du contexte SHA1\n");
@@ -128,37 +130,37 @@ void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *outp
     EVP_MD_CTX_free(ctx);
 }
 
-ij_vc* get_cipher(FILE* fp) {
-    // Allocation de mémoire pour un nouvel objet ij_vc
+ij_vc* get_cipher(FILE* fp) {//prendre l'iv dans le fichier 
+    // allocation d un nouvel objet ij_vc
     ij_vc* new_node = (ij_vc*)malloc(sizeof(ij_vc));
     if (new_node == NULL) {
         perror("Memory allocation failed");
-        return NULL; // Retourner NULL en cas d'échec d'allocation
+        return NULL; 
     }
 
-    // Lecture d'un objet de type ij_vc dans new_node
+    // Lecture dans new_node
     if (fread(new_node, sizeof(ij_vc), 1, fp) != 1) {
         perror("Failed to read structure from file");
-        free(new_node);  // Libération de la mémoire en cas d'échec de lecture
+        free(new_node);  
         return NULL;
     }
     fclose(fp);
-    return new_node;  // Retourner le pointeur vers la structure lue
+    return new_node;  
 }
 
 
-void free_mots_de_passe(Mot_de_passe* liste) {
+void free_mots_de_passe(Mot_de_passe* liste) {//pour free la linked list a la fon du programme
     Mot_de_passe* courant;
-    while (liste != NULL) {
+    while (liste != NULL) {//parcourt la linked list et les free un par un
         courant = liste;
         liste = liste->ptr;
         free(courant);
     }
 }
 
-void affiche_mdp(Mot_de_passe* mdp) {
+void affiche_mdp(Mot_de_passe* mdp) {//affiche un structure mot de pase
     if (mdp == NULL) {
-        fprintf(stderr, "Erreur : Le pointeur vers Mot_de_passe est NULL.\n");
+        fprintf(stderr, "Erreur le pointeur vers Mot_de_passe est NULL.\n");
         return;
     }
 
@@ -166,30 +168,24 @@ void affiche_mdp(Mot_de_passe* mdp) {
     //printf("Valeur brute de la date de création: %ld\n", mdp->creation);
     //printf("Valeur brute de la date de modification: %ld\n", mdp->modif);
 
-    // Conversion de la date de création
-    
-
     // Affichage des informations du mot de passe
     printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s\n",
            mdp->ID, mdp->creation, mdp->modif, mdp->Site,mdp->Login, mdp->Commentaire);
     
 }
 
-void save_list_to_csv(Mot_de_passe* head, const char* filename) {
+void save_list_to_csv(Mot_de_passe* head, const char* filename) {//pour dump les mots de passe dans un csv
     // Ouvrir le fichier en mode écriture
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
-        perror("Erreur lors de l'ouverture du fichier CSV");
+        perror("Erreur lors de l'ouverture du fichier");
         return;
     }
-
-    // Écrire l'en-tête des colonnes dans le fichier CSV
-    //fprintf(file, "ID,Login,Password,Site,Commentaire,Creation,Modification\n");
 
     // Parcourir la liste et écrire chaque élément dans le fichier
     Mot_de_passe* current = head;
     while (current != NULL) {
-        // Échapper les virgules dans les commentaires ou autres champs si nécessaire
+        
         fprintf(file, "%d,%s,%s,%s,%s,%s,%s\n",
                 current->ID,
                 current->Login,
@@ -199,50 +195,49 @@ void save_list_to_csv(Mot_de_passe* head, const char* filename) {
                 current->creation,
                 current->modif);
         
-        // Passer au prochain élément dans la liste
+        
         current = current->ptr;
     }
 
-    // Fermer le fichier
     fclose(file);
     printf("Liste sauvegardée dans %s\n", filename);
 }
 
-void affiche_list(Mot_de_passe* mdp){
+void affiche_list(Mot_de_passe* mdp){//affiche list sert a afficher la liste de tous le mdp
 	Mot_de_passe* tmp = mdp;
 	while (tmp != NULL)
 	{
-		affiche_mdp(tmp);
+		affiche_mdp(tmp);//on appalle affiche_mdp pour chaque mdp de la linked list
 		tmp = tmp->ptr;
 	}
 	
 }
 
-Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex){
+Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex){//permet de selectionner un mdp par son ID
     Mot_de_passe* head =hea;
-	while (head != NULL && head->ID != idex){
+	while (head != NULL && head->ID != idex){//tant que index n'est pas le bon on continue
         head = head->ptr;
     }
     return head;
 }
 
-Mot_de_passe* select_mdp_ask(Mot_de_passe* hea){
+Mot_de_passe* select_mdp_ask(Mot_de_passe* hea){//permet de retourner un element mdp grace au nom du site
     Mot_de_passe* head =hea;
     printf("\nentrez le site pour lequel vous souhaitez prendre le mot de passe\n");
     char entre[50];
     scanf("%s", entre);
-	while (head != NULL && strcmp(head->Site, entre)){
+	while (head != NULL && strcmp(head->Site, entre)){//tant que le nom du site n'est pas le bon on continue
         head = head->ptr;
     }
     return head;
 }
 
-Mot_de_passe* select_mdp_ask_login(Mot_de_passe* hea){
+Mot_de_passe* select_mdp_ask_login(Mot_de_passe* hea){//retourne un pointeur vers l'objet mot de passe possédant le login demandé
     Mot_de_passe* head =hea;
     printf("\nentrez le login pour lequel vous souhaitez prendre le mot de passe\n");
     char entre[50];
     scanf("%s", entre);
-	while (head != NULL && strcmp(head->Login, entre)){
+	while (head != NULL && strcmp(head->Login, entre)){//tant que le login n'est pas le bon on continue
         head = head->ptr;
     }
     return head;
@@ -250,7 +245,7 @@ Mot_de_passe* select_mdp_ask_login(Mot_de_passe* hea){
 
 //I WILL TREAT HER BETTER THTAN YOU EVER WILL JUSTE YOU WATCH
 
-Mot_de_passe* recup_list(FILE* fiel) {
+Mot_de_passe* recup_list(FILE* fiel) {//recupérer la liste des mots de passe dan sle fichier
     Mot_de_passe* head = NULL;
     Mot_de_passe* prev = NULL;
     Mot_de_passe* new_node;
@@ -268,7 +263,7 @@ Mot_de_passe* recup_list(FILE* fiel) {
         }
         new_node->ptr = NULL;  
 
-        printf("Récupération ID: %d, Site: %s\n", new_node->ID, new_node->Site);
+        //printf("Récupération ID: %d, Site: %s\n", new_node->ID, new_node->Site);
 
         if (head == NULL) {
             head = new_node;
@@ -282,11 +277,10 @@ Mot_de_passe* recup_list(FILE* fiel) {
 }
 
 
-
-void enregister(Mot_de_passe* mdp, FILE* file) {
+void enregister(Mot_de_passe* mdp, FILE* file) {//enregisteer la liste dans le fichier
     Mot_de_passe* ptr1 = mdp;
     while (ptr1 != NULL) {
-        printf("Enregistrement ID: %d, Site: %s\n", ptr1->ID, ptr1->Site);
+        printf("Enregistrement ID: %d, Site: %s\n", ptr1->ID, ptr1->Site);//enregistre chaque element jusqu'au dernier
         fwrite(ptr1, sizeof(Mot_de_passe), 1, file);
         ptr1 = ptr1->ptr;
     }
@@ -294,69 +288,35 @@ void enregister(Mot_de_passe* mdp, FILE* file) {
 }
 
 
-Mot_de_passe* read_file(FILE* file){
-    Mot_de_passe* head = NULL;  // Tête de la liste
-    Mot_de_passe* prev = NULL;  // Pointeur vers le nœud précédent
-    Mot_de_passe temp;
+Mot_de_passe* delpasswd(Mot_de_passe* psw, Mot_de_passe* first) {//pour delete le mdp
+    /*if (first == NULL || psw == NULL) {
+        return first; // rien r supprimer si la liste est vide ou si l'élément est null
+    }*/
 
-  
-    while (fread(&temp, sizeof(Mot_de_passe), 1, file) == 1) {
-        
-        Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
-        if (new_node == NULL) {
-            perror("Memory allocation failed");
-            fclose(file);
-            return head; 
-        }
-
-        
-        *new_node = temp;  
-        new_node->ptr = NULL;  
-
-        
-        if (head == NULL) {
-            head = new_node;
-        } else {
-            prev->ptr = new_node;  
-        }
-
-        prev = new_node;  
-    }
-
-    fclose(file);
-    return head; 
-}
-
-Mot_de_passe* delpasswd(Mot_de_passe* psw, Mot_de_passe* first) {
-    if (first == NULL || psw == NULL) {
-        return first; // Rien à supprimer si la liste est vide ou si l'élément est NULL
-    }
-
-    // Cas où l'élément à supprimer est le premier élément de la liste
+    // si c'est le premier element de la liste
     if (first == psw) {
-        Mot_de_passe* new_first = first->ptr; // Nouveau début de liste
-        free(first);                          // Libération de l'élément
-        return new_first;                     // Retourne le nouveau premier élément
+        Mot_de_passe* new_first = first->ptr; 
+        free(first);                          
+        return new_first;                     
     }
 
-    // Recherche de l'élément avant celui à supprimer
+    // cherche l'élément avant celui à supprimer
     Mot_de_passe* search = first;
     while (search->ptr != psw && search->ptr != NULL) {
         search = search->ptr;
     }
 
-    // Si l'élément est trouvé dans la liste
     if (search->ptr == psw) {
-        search->ptr = psw->ptr;  // Contourner l'élément à supprimer
-        free(psw);               // Libération de l'élément
+        search->ptr = psw->ptr;  // raccorder les deux mots de passe adjascents
+        free(psw);               
     }
 
-    return first;  // Retourne la tête de la liste, inchangée si `psw` n'était pas le premier
+    return first; 
 }
 
-void modify_pswd(Mot_de_passe* mdp) {
+void modify_pswd(Mot_de_passe* mdp) {//fonction pour modifier le mdp
     affiche_mdp(mdp);
-    printf("\nQue voulez-vous modifier?\n1 : Login\n2 : Password\n3 : Site\n4 : Commentaire\n");
+    printf("\nQue voulez-vous modifier?\n1 : Login\n2 : Password\n3 : Site\n4 : Commentaire\n5 : définir un mot de pase aléatoire\n");
     
     int h;
     if (scanf(" %d", &h) != 1) {
@@ -366,75 +326,71 @@ void modify_pswd(Mot_de_passe* mdp) {
 
     switch (h) {
         case 1:
-            printf("Entrez votre nouveau login  :\n");
+            printf("Entrez votre nouveau login :\n");
             scanf("%29s", mdp->Login);
             break;
         case 2:
-            printf("Entrez le nouveau password  :\n");
+            printf("Entrez le nouveau password :\n");
             scanf("%29s", mdp->Password);
             break;
         case 3:
-            printf("Entrez le nouveau nom de site  :\n");
+            printf("Entrez le nouveau nom de site :\n");
             scanf("%49s", mdp->Site);
             break;
         case 4:
-            printf("Entrez le nouveau commentaire  :\n");
+            printf("Entrez le nouveau commentaire :\n");
             scanf("%255s", mdp->Commentaire);
             break;
+        case 5:
+            random_passwd(mdp);
+            break;
         default:
-            printf("Option non valide.\n");
+            printf("Option non valide\n");
             return;
     }
 
-    // Mise à jour de la date de modification uniquement
-    time_t cre;  // Correction : déclaration d'un time_t simple
+    // Mise à jour de la date de modification 
+    time_t cre;  
 
-    time(&cre);  // Correction : passer l'adresse de cre
+    time(&cre);  
 
-    // Obtenir la représentation en struct tm du temps actuel
     struct tm* local_time = localtime(&cre);
-
-    // Assurez-vous que ptr->creation est un tableau de caractères de taille adéquate (e.g., char creation[20]; dans la structure)
     strftime(mdp->modif, sizeof(mdp->modif), "%d/%m/%Y %H:%M:%S", local_time);
-
-
-    // Afficher les informations mises à jour
     affiche_mdp(mdp);
 }
 
 
-int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv) {
+int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv) {//decrypte un fichier en utilisant l'aes128
     EVP_CIPHER_CTX *ctx;
     int len;
-    size_t plaintext_len;  // Changement ici, passer à size_t
+    size_t plaintext_len;
     size_t cipherlen;
     unsigned char *ciphertext, *plaintext;
-
-    // Obtenir la taille du fichier d'entrée
+    //dérivé de la methode vue en cours mais pour un fichier
+    // obtenir la taille du fichier d'entrée
     fseek(ifp, 0L, SEEK_END);
     cipherlen = ftell(ifp);
     fseek(ifp, 0L, SEEK_SET);
 
-    // Allocation de mémoire pour les données chiffrées et déchiffrées
     ciphertext = malloc(cipherlen);
-    plaintext = malloc(cipherlen);  // Prévoir la même taille, voire plus en cas de padding
+    plaintext = malloc(cipherlen); 
 
     if (ciphertext == NULL || plaintext == NULL) {
-        printf("Erreur d'allocation de mémoire.\n");
+        printf("Erreur d'allocation de mémoire\n");
         return -1;
     }
 
-    // Lire le fichier chiffré
+    // lire le fichier chiffré
     if (fread(ciphertext, 1, cipherlen, ifp) != cipherlen) {
-        printf("Erreur lors de la lecture du fichier chiffré.\n");
+        printf("Erreur lors de la lecture du fichier chiffré\n");
         free(ciphertext);
         free(plaintext);
         return -1;
     }
 
-    // Initialisation du contexte de déchiffrement
+    // Initialisation du contexte
     if (!(ctx = EVP_CIPHER_CTX_new())) {
-        printf("Erreur lors de l'initialisation du contexte AES.\n");
+        printf("Erreur lors de l'initialisation du contexte AES\n");
         free(ciphertext);
         free(plaintext);
         return -1;
@@ -442,7 +398,7 @@ int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
 
     // Initialisation de la décryption
     if (EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv) != 1) {
-        printf("Erreur lors de l'initialisation de la décryption.\n");
+        printf("Erreur lors de l'initialisation de la décryption\n");
         EVP_CIPHER_CTX_free(ctx);
         free(ciphertext);
         free(plaintext);
@@ -451,7 +407,7 @@ int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
 
     // Déchiffrement des données
     if (EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, cipherlen) != 1) {
-        printf("Erreur lors de la décryption.\n");
+        printf("Erreur lors de la décryption\n");
         EVP_CIPHER_CTX_free(ctx);
         free(ciphertext);
         free(plaintext);
@@ -460,7 +416,7 @@ int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
 
     plaintext_len = len;
 
-    // Finalisation de la décryption
+    // finalisation de la décryption
     if (EVP_DecryptFinal_ex(ctx, plaintext + len, &len) != 1) {
         printf("Erreur lors de la finalisation de la décryption.\n");
         EVP_CIPHER_CTX_free(ctx);
@@ -471,40 +427,39 @@ int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
 
     plaintext_len += len;
 
-    // Écrire les données déchiffrées dans le fichier de sortie
-    if (fwrite(plaintext, 1, plaintext_len, ofp) != plaintext_len) {  // Pas de warning maintenant
-        printf("Erreur lors de l'écriture des données déchiffrées dans le fichier de sortie.\n");
+    // écrire les données déchiffrées
+    if (fwrite(plaintext, 1, plaintext_len, ofp) != plaintext_len) { 
+        printf("Erreur lors de l'écriture des données déchiffrées\n");
         EVP_CIPHER_CTX_free(ctx);
         free(ciphertext);
         free(plaintext);
         return -1;
     }
 
-    printf("Déchiffrement réussi, taille des données déchiffrées : %zu octets\n", plaintext_len);  // Utilisation de %zu pour size_t
+    printf("Déchiffrement réussi, taille des données déchiffrées : %zu octets\n", plaintext_len);
 
-    // Nettoyage
+    // nettoyage
     EVP_CIPHER_CTX_free(ctx);
     free(ciphertext);
     free(plaintext);
 
-    return plaintext_len;  // Retourner la taille des données déchiffrées
+    return plaintext_len;
 }
 
-int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv) {
+int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv) {//fonction pour chiffrere des données dans un fichir
     EVP_CIPHER_CTX *ctx;
     int len;
-    size_t plaintext_len;  // Utilisation de size_t pour la taille du texte en clair
+    size_t plaintext_len;  
     size_t cipherlen;
     unsigned char *plaintext, *ciphertext;
-
+    //similaire a celle vue en cours
     // Obtenir la taille du fichier d'entrée
     fseek(ifp, 0L, SEEK_END);
     plaintext_len = ftell(ifp);
     fseek(ifp, 0L, SEEK_SET);
 
-    // Allocation de mémoire pour les données en clair et chiffrées
     plaintext = malloc(plaintext_len);
-    ciphertext = malloc(plaintext_len + AES_BLOCK_SIZE);  // Taille pour supporter padding
+    ciphertext = malloc(plaintext_len + AES_BLOCK_SIZE);
 
     if (plaintext == NULL || ciphertext == NULL) {
         printf("Erreur d'allocation de mémoire.\n");
@@ -527,7 +482,7 @@ int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
         return -1;
     }
 
-    // Initialisation de la encryption
+    // Initialisation de l'encryption
     if (EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv) != 1) {
         printf("Erreur lors de l'initialisation du chiffrement.\n");
         EVP_CIPHER_CTX_free(ctx);
@@ -558,7 +513,7 @@ int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
 
     cipherlen += len;
 
-    // Écrire les données chiffrées dans le fichier de sortie
+    // Ecrire les données chiffrées dans le fichier de sortie
     if (fwrite(ciphertext, 1, cipherlen, ofp) != cipherlen) {
         printf("Erreur lors de l'écriture des données chiffrées dans le fichier de sortie.\n");
         EVP_CIPHER_CTX_free(ctx);
@@ -574,10 +529,9 @@ int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
     free(plaintext);
     free(ciphertext);
 
-    return cipherlen;  // Retourner la taille des données chiffrées
+    return cipherlen; 
 }
 
-// Fonction pour trouver le plus grand ID dans la liste
 // Fonction pour charger les mots de passe depuis un fichier CSV
 void load_from_csv(Mot_de_passe** head, const char* filename) {
     FILE* file = fopen(filename, "r");
@@ -587,12 +541,10 @@ void load_from_csv(Mot_de_passe** head, const char* filename) {
     }
 
     char line[512];
-    int max_id = find_max(*head); // Trouver le plus grand ID déjà existant dans la liste
-
-    // Lire la première ligne (les en-têtes) et ignorer
+    int max_id = find_max(*head); // Trouver le plus grand ID dans la liste
    
     while (fgets(line, sizeof(line), file)) {
-        // Variables pour stocker les champs du CSV
+        // allocation d'un nouvel objet mot de passe
         Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
         if (new_node == NULL) {
             perror("Erreur d'allocation de mémoire");
@@ -600,31 +552,29 @@ void load_from_csv(Mot_de_passe** head, const char* filename) {
             return;
         }
 
-        // Utilisation de sscanf pour lire les champs du CSV
+        // lire les champs du CSV
         
         sscanf(line, "%d,%29[^,],%29[^,],%49[^,],%255[^,],%19[^,],%19[^\n]",
                &new_node->ID, new_node->Login, new_node->Password, new_node->Site, 
                new_node->Commentaire, new_node->creation, new_node->modif);
 
-        // Vérifier si l'ID importé est inférieur à max_id (dabet)
+        // vérifier si l'ID importé est inférieur à max_id
         if (new_node->ID <= max_id) {
             max_id ++;
-            new_node->ID = max_id;  // Si l'ID importé est inférieur ou égal à max_id, on le met à jour
+            new_node->ID = max_id;  // si l'ID est inférieur ou égal à max_id, on le met à jour
         }
-
-        // Mettre à jour l'ID du mot de passe
        
         new_node->ptr = NULL;
 
-        // Ajouter le nouveau mot de passe à la liste
+        // ajouter le nouveau mot de passe à la liste
         if (*head == NULL) {
-            *head = new_node;  // Si la liste est vide, le premier élément devient head
+            *head = new_node; 
         } else {
             Mot_de_passe* temp = *head;
             while (temp->ptr != NULL) {
-                temp = temp->ptr;  // Parcours jusqu'à la fin de la liste
+                temp = temp->ptr;
             }
-            temp->ptr = new_node;  // Ajout du nouveau noeud à la fin de la liste
+            temp->ptr = new_node;// ajout du nouvel element à la fin de la liste
         }
 
         // Mettre à jour max_id pour la prochaine itération
@@ -635,7 +585,7 @@ void load_from_csv(Mot_de_passe** head, const char* filename) {
     fclose(file);
 }
 
-int find_max(Mot_de_passe* head) {
+int find_max(Mot_de_passe* head) {//fonction pour trouver le plus grand ID pour etre sur qu'il n'y pas de doublons
     int max_id = 0; //initialise a 0
     Mot_de_passe* current = head;
 
@@ -650,7 +600,7 @@ int find_max(Mot_de_passe* head) {
     return max_id;
 }
 
-void random_passwd(Mot_de_passe* mdp) {
+void random_passwd(Mot_de_passe* mdp) {//fonction qui set un password aléatoire
     int l;
     printf("Select the length of your pass (min 12): ");
     scanf("%d", &l);
@@ -662,13 +612,13 @@ void random_passwd(Mot_de_passe* mdp) {
     }
 
     int c;
-    const char allowed[] = "azertyuiopqsdfghjklmwxcvbn?.!§^1234567890)=àç_è-(é&ù~@]}{[|#²AZERTYUIOPMLKJHGFDSQWXCVBN*µ<>";
+    const char allowed[] = "azertyuiopqsdfghjklmwxcvbn?.!§^1234567890)=àç_è-(é&ù~@]}{[|#²AZERTYUIOPMLKJHGFDSQWXCVBN*µ<>";//chaine des caractères a utiliser
 
     srand(time(NULL));
 
     for (int i = 0; i < l; i++) {
-        c = rand() % strlen(allowed);  // Utiliser la longueur de `allowed`
-        mdp->Password[i] = allowed[c];  // Assignation du caractère
+        c = rand() % strlen(allowed);  
+        mdp->Password[i] = allowed[c];  
     }
-    mdp->Password[l] = '\0';  // Ajouter le caractère de fin de chaîne
+    mdp->Password[l] = '\0';  
 }

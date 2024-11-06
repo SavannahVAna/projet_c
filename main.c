@@ -15,12 +15,13 @@ int main(int argc, char* argv[]) {
     unsigned char key[16];
     int dabet = 0;
     Mot_de_passe* scdptr;
-    ij_vc* ivpointer = NULL;  // Initialisation à NULL pour éviter un double free potentiel
+    ij_vc* ivpointer = NULL;  // Initialisation des diverses variables utilisées
     FILE *fdecrypted;
     Mot_de_passe* first = NULL;
     FILE* fiv;
 
     // Vérification si le fichier crypted existe
+    //si il existe ça veut dire il y a deja des données sauvegardées sinon skip ça (premiere utilisation)
     if (access("crypted", F_OK) == 0) {
         fp = fopen("crypted", "rb");
         fiv = fopen("IV", "rb");
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]) {
         printf("Bienvenue dans DR_Hash, entrez votre mot de passe pour continuer : ");
         scanf("%15s", pass); // Limite à 15 caractères
 
-        ivpointer = get_cipher(fiv);
+        ivpointer = get_cipher(fiv);//recuperer l'iv dans le fichier IV et l'écrir dans la struct iv_jc
         if (ivpointer == NULL) {
             fprintf(stderr, "Erreur : IV non récupéré correctement.\n");
             fclose(fiv);
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
         }
         printf("\n");
         
-
+        //sha1 du password pour avoir la clé
         sha1_hash((const unsigned char *)pass, strlen((const char *)pass), key);
         printf("Clé SHA1 : ");
         for (int i = 0; i < 16; i++) {
@@ -60,11 +61,12 @@ int main(int argc, char* argv[]) {
             fclose(fp);
             return 1;
         }
-
+        //ouverture et déchiffrement du ficher
+        //il l'écrit dans le ficher fdecrypted
         aes_decrypt_file(fp, fdecrypted, key, ivpointer->IV);
         fclose(fdecrypted);
         fclose(fp);
-
+        //lecture du fichier decrypted pour sortir les mdp
         fdecrypted = fopen("decrypted", "rb");
         if (fdecrypted == NULL) {
             fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour lecture.\n");
@@ -234,7 +236,7 @@ int main(int argc, char* argv[]) {
         }
         printf("\n");
     }
-
+    //chiffrement
     fp = fopen("crypted", "wb");
     fdecrypted = fopen("decrypted", "rb");
     if (fp == NULL || fdecrypted == NULL) {
@@ -250,6 +252,7 @@ int main(int argc, char* argv[]) {
     // Libération des ressources
     free_mots_de_passe(first);
     if (ivpointer) free(ivpointer);
+    //delete decrypted pou rqu'il ne reste plus que le fichier chiffré
     remove("decrypted");
     return 0;
 }

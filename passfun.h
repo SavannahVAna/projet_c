@@ -17,9 +17,9 @@ typedef struct mdp{
 
 
 typedef struct cipher {
-	unsigned char IV[16];
+	unsigned char IV[16];//struct pour l'iv parce que c'est plus simple a lire comme ça
 } ij_vc;
-
+//prototype des diverses fonctions
 void copy_to_clipboard(const char *arr);
 void affiche_list(Mot_de_passe* mdp);
 void free_mots_de_passe(Mot_de_passe* liste);
