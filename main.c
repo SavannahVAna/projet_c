@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
         fiv = fopen("IV", "rb");
         
         if (fp == NULL || fiv == NULL) {
-            fprintf(stderr, "Erreur : impossible d'ouvrir les fichiers cryptés.\n");
+            fprintf(stderr, "impossible d'ouvrir les fichiers cryptés\n");
             return 1;
         }
         
@@ -36,28 +36,28 @@ int main(int argc, char* argv[]) {
 
         ivpointer = get_cipher(fiv);//recuperer l'iv dans le fichier IV et l'écrir dans la struct iv_jc
         if (ivpointer == NULL) {
-            fprintf(stderr, "Erreur : IV non récupéré correctement.\n");
+            fprintf(stderr, "IV non récupéré\n");
             fclose(fiv);
             return 1;
         }
 
-        printf("IV récupéré : ");
+        /*printf("IV récupéré : ");
         for (int i = 0; i < 16; i++) {
             printf("%02x", ivpointer->IV[i]);
         }
-        printf("\n");
+        printf("\n");*/
         
         //sha1 du password pour avoir la clé
         sha1_hash((const unsigned char *)pass, strlen((const char *)pass), key);
-        printf("Clé SHA1 : ");
+        /*printf("Clé SHA1 : ");
         for (int i = 0; i < 16; i++) {
             printf("%02x", key[i]);
         }
-        printf("\n");
+        printf("\n");*/
 
         fdecrypted = fopen("decrypted", "wb");
         if (fdecrypted == NULL) {
-            fprintf(stderr, "Erreur : impossible de créer le fichier décrypté.\n");
+            fprintf(stderr, "impossible de créer le fichier décrypté\n");
             fclose(fp);
             return 1;
         }
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         //lecture du fichier decrypted pour sortir les mdp
         fdecrypted = fopen("decrypted", "rb");
         if (fdecrypted == NULL) {
-            fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour lecture.\n");
+            fprintf(stderr, "impossible d'ouvrir le fichier décrypté pour lecture\n");
             return 1;
         }
         
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
     // Sauvegarde des données en clair
     fdecrypted = fopen("decrypted", "wb");
     if (fdecrypted == NULL) {
-        fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour écriture.\n");
+        fprintf(stderr, "impossible d'ouvrir le fichier décrypté pour écriture\n");
         free_mots_de_passe(first);
         if (ivpointer) free(ivpointer);
         return 1;
@@ -216,7 +216,7 @@ int main(int argc, char* argv[]) {
 
         fiv = fopen("IV", "wb");
         if (fiv == NULL) {
-            fprintf(stderr, "Erreur : impossible de créer le fichier IV.\n");
+            fprintf(stderr, "impossible de créer le fichier IV\n");
             free(ivpointer);
             free_mots_de_passe(first);
             return 1;
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
         fclose(fiv);
 
         sha1_hash((const unsigned char *)pass, strlen((const char *)pass), key);
-        printf("IV récupéré : ");
+        /*printf("IV récupéré : ");
         for (int i = 0; i < 16; i++) {
             printf("%02x", ivpointer->IV[i]);
         }
@@ -234,13 +234,13 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < 16; i++) {
             printf("%02x", key[i]);
         }
-        printf("\n");
+        printf("\n");*/
     }
     //chiffrement
     fp = fopen("crypted", "wb");
     fdecrypted = fopen("decrypted", "rb");
     if (fp == NULL || fdecrypted == NULL) {
-        fprintf(stderr, "Erreur : impossible d'ouvrir les fichiers pour le chiffrement.\n");
+        fprintf(stderr, "impossible d'ouvrir les fichiers pour le chiffrement.\n");
         if (fp) fclose(fp);
         if (fdecrypted) fclose(fdecrypted);
         free_mots_de_passe(first);
