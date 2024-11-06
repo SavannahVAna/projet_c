@@ -117,7 +117,10 @@ void affiche_mdp(Mot_de_passe* mdp) {
 
 void copy_to_clipboard(Mot_de_passe* md){
     char command[1024];
+    //wsl
     snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", md->Password);
+    //uncoment for linux
+    //snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", md->Password);
     system(command);
 }
 
