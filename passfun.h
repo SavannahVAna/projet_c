@@ -10,8 +10,8 @@ typedef struct mdp{
     char Password[30];
     char Site[50];
     char Commentaire[256];
-    long int creation;
-    long int modif;
+    char creation[20];
+    char modif[20];
     Mot_de_passe* ptr;
 } Mot_de_passe;
 

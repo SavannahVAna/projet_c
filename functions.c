@@ -32,8 +32,16 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     ptr->ptr = ancin;
     ptr->ID = ID;
 
-    time(&ptr->creation);
-    time(&ptr->modif);
+    time_t cre;  // Correction : déclaration d'un time_t simple
+
+    time(&cre);  // Correction : passer l'adresse de cre
+
+    // Obtenir la représentation en struct tm du temps actuel
+    struct tm* local_time = localtime(&cre);
+
+    // Assurez-vous que ptr->creation est un tableau de caractères de taille adéquate (e.g., char creation[20]; dans la structure)
+    strftime(ptr->creation, sizeof(ptr->creation), "%d/%m/%Y %H:%M:%S", local_time);
+    strftime(ptr->modif, sizeof(ptr->modif), "%d/%m/%Y %H:%M:%S", local_time);
 
     return ptr;
 }
@@ -89,38 +97,24 @@ void affiche_mdp(Mot_de_passe* mdp) {
     }
 
     // Affichage direct des valeurs de time_t pour le débogage
-    printf("Valeur brute de la date de création: %ld\n", mdp->creation);
-    printf("Valeur brute de la date de modification: %ld\n", mdp->modif);
+    //printf("Valeur brute de la date de création: %ld\n", mdp->creation);
+    //printf("Valeur brute de la date de modification: %ld\n", mdp->modif);
 
     // Conversion de la date de création
-    struct tm* local_time = localtime(&mdp->creation);
-    char* date_str = (char*)malloc(100 * sizeof(char)); 
-     if (date_str == NULL) {
-        perror("Erreur d'allocation de mémoire");
-        return;
-    }
-    struct tm* local_time2 = localtime(&mdp->modif);
-    char* date_str2 = (char*)malloc(100 * sizeof(char)); 
-    if (date_str2 == NULL) {
-        perror("Erreur d'allocation de mémoire");
-        return;
-    }
-    strftime(date_str, 100, "%d/%m/%Y %H:%M:%S", local_time);
-    strftime(date_str2, 100, "%d/%m/%Y %H:%M:%S", local_time2);
+    
 
     // Affichage des informations du mot de passe
     printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s\n",
-           mdp->ID, date_str, date_str2, mdp->Site, mdp->Login, mdp->Commentaire);
-    free(date_str);
-    free(date_str2);
+           mdp->ID, mdp->creation, mdp->modif, mdp->Site, mdp->Login, mdp->Commentaire);
+    
 }
 
 void copy_to_clipboard(Mot_de_passe* md){
     char command[1024];
     //wsl
-    snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", md->Password);
+    //snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", md->Password);
     //uncoment for linux
-    //snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", md->Password);
+    snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", md->Password);
     system(command);
 }
 
@@ -282,7 +276,16 @@ void modify_pswd(Mot_de_passe* mdp) {
     }
 
     // Mise à jour de la date de modification uniquement
-    time(&mdp->modif);
+    time_t cre;  // Correction : déclaration d'un time_t simple
+
+    time(&cre);  // Correction : passer l'adresse de cre
+
+    // Obtenir la représentation en struct tm du temps actuel
+    struct tm* local_time = localtime(&cre);
+
+    // Assurez-vous que ptr->creation est un tableau de caractères de taille adéquate (e.g., char creation[20]; dans la structure)
+    strftime(mdp->modif, sizeof(mdp->modif), "%d/%m/%Y %H:%M:%S", local_time);
+
 
     // Afficher les informations mises à jour
     affiche_mdp(mdp);
