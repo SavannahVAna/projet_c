@@ -54,11 +54,6 @@ void sha1_hash(const unsigned char *input, size_t input_len, unsigned char *outp
     EVP_MD_CTX_free(ctx);
 }
 
-void show_password(Mot_de_passe* ps){
-    printf("password for the selected entry is : ");
-    printf("%s\n",ps->Password);
-}
-
 ij_vc* get_cipher(FILE* fp) {
     // Allocation de mémoire pour un nouvel objet ij_vc
     ij_vc* new_node = (ij_vc*)malloc(sizeof(ij_vc));
@@ -120,6 +115,11 @@ void affiche_mdp(Mot_de_passe* mdp) {
     free(date_str2);
 }
 
+void copy_to_clipboard(Mot_de_passe* md){
+    char command[1024];
+    snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", md->Password);
+    system(command);
+}
 
 
 void affiche_list(Mot_de_passe* mdp){
