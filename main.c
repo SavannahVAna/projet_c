@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
                 scdptr = select_mdp(first, input);
                 affiche_mdp(scdptr);
-                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password\n");
+                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password / j to copy login\n");
                 scanf(" %c", &slect);
 
                 if (slect == 'd') {
@@ -110,8 +110,13 @@ int main(int argc, char* argv[]) {
                 }
                 else if (slect == 'h')
                 {
-                    copy_to_clipboard(scdptr);
+                    copy_to_clipboard(scdptr->Password);
                 }
+                else if (slect == 'j')
+                {
+                    copy_to_clipboard(scdptr->Login);
+                }
+                
                 
                 break;
 

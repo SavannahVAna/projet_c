@@ -7,6 +7,62 @@
 #include <time.h>
 #include <unistd.h>
 
+void copy_to_clipboard(const char *arr) {
+    char command[1024];
+    #if defined(_WIN32) || defined(_WIN64)
+        if (OpenClipboard(NULL)) {
+        // Vider le presse-papiers avant de copier de nouvelles données
+        EmptyClipboard();
+
+        // Créer une handle de mémoire globale
+        size_t len = strlen(arr) + 1;
+        HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, len);
+        
+        if (hGlobal) {
+            // Verrouiller la mémoire pour obtenir un pointeur
+            char *ptr = (char *)GlobalLock(hGlobal);
+            
+            // Copier la chaîne dans la mémoire
+            memcpy(ptr, arr, len);
+
+            // Déverrouiller la mémoire
+            GlobalUnlock(hGlobal);
+
+            // Placer la chaîne dans le presse-papiers
+            SetClipboardData(CF_TEXT, hGlobal);
+        }
+
+        // Fermer le presse-papiers
+        CloseClipboard();
+    } else {
+        printf("Erreur lors de l'ouverture du presse-papiers.\n");
+    }
+
+    #elif defined(__APPLE__) || defined(__MACH__)
+        rsnprintf(command, sizeof(command), "echo \"%s\" | pbcopy", arr);
+        system(command);
+
+    #elif defined(__linux__)
+        // Vérification si c'est WSL en lisant le fichier /proc/version
+        FILE* file = fopen("/proc/version", "r");
+        if (file) {
+            char buffer[256];
+            fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+            fclose(file);
+            buffer[255] = '\0';
+            if (strstr(buffer, "Microsoft") || strstr(buffer, "WSL")) {
+                snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", arr);
+                system(command);
+            } else {
+                snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", arr);
+                system(command);
+            }
+        } else {
+            snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", arr);
+            system(command);
+        }
+    #endif
+}
 
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     printf("Pour quel site est ce mot de passe ?\n");
@@ -104,19 +160,12 @@ void affiche_mdp(Mot_de_passe* mdp) {
     
 
     // Affichage des informations du mot de passe
-    printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s\n",
-           mdp->ID, mdp->creation, mdp->modif, mdp->Site, mdp->Login, mdp->Commentaire);
+    printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\ncommentaires : %s\n",
+           mdp->ID, mdp->creation, mdp->modif, mdp->Site, mdp->Commentaire);
     
 }
 
-void copy_to_clipboard(Mot_de_passe* md){
-    char command[1024];
-    //wsl
-    //snprintf(command, sizeof(command), "echo \"%s\" | clip.exe", md->Password);
-    //uncoment for linux
-    snprintf(command, sizeof(command), "echo \"%s\" | xclip -selection clipboard", md->Password);
-    system(command);
-}
+
 
 
 void affiche_list(Mot_de_passe* mdp){

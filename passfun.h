@@ -20,7 +20,7 @@ typedef struct cipher {
 	unsigned char IV[16];
 } ij_vc;
 
-void copy_to_clipboard(Mot_de_passe* md);
+void copy_to_clipboard(const char *arr);
 void affiche_list(Mot_de_passe* mdp);
 void liberer_mots_de_passe(Mot_de_passe* liste);
 ij_vc* get_cipher(FILE* fp);
