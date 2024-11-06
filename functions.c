@@ -617,7 +617,7 @@ void random_passwd(Mot_de_passe* mdp) {//fonction qui set un password aléatoire
     srand(time(NULL));
 
     for (int i = 0; i < l; i++) {
-        c = rand() % strlen(allowed);  
+        c = rand() % strlen(allowed);//construction de mot de passe
         mdp->Password[i] = allowed[c];  
     }
     mdp->Password[l] = '\0';  
