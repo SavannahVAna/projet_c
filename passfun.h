@@ -22,7 +22,7 @@ typedef struct cipher {
 
 void copy_to_clipboard(const char *arr);
 void affiche_list(Mot_de_passe* mdp);
-void liberer_mots_de_passe(Mot_de_passe* liste);
+void free_mots_de_passe(Mot_de_passe* liste);
 ij_vc* get_cipher(FILE* fp);
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin);
 Mot_de_passe* recup_list(FILE* fiel);
@@ -34,3 +34,10 @@ void modify_pswd(Mot_de_passe* mdp);
 void enregister(Mot_de_passe* mdp, FILE* file);
 int aes_decrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv);
 int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsigned char *iv);
+Mot_de_passe* select_mdp_ask(Mot_de_passe* hea);
+void save_list_to_csv(Mot_de_passe* head, const char* filename);
+void load_from_csv(Mot_de_passe** head, const char* filename);
+
+int find_max(Mot_de_passe* head);
+Mot_de_passe* select_mdp_ask_login(Mot_de_passe* hea);
+void random_passwd(Mot_de_passe* mdp);

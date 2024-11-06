@@ -78,15 +78,13 @@ int main(int argc, char* argv[]) {
     int loop = 1;
     int input;
     char slect;
-
-    if (first != NULL) {
-        dabet = first->ID + 1;
-    }
-
+    char namefile[20];
+    
+    dabet = find_max(first);
     affiche_list(first);
 
     while (loop) {
-        printf("menu:\n l pour lister toutes les entrées\n s pour sélectionner une entrée\n c pour créer une nouvelle entrée\n q pour quitter\n");
+        printf("menu:\n l pour lister toutes les entrées\n s pour sélectionner une entrée a l'aide de son index, p pour le faire a partir du nom du site, n a partir du login\n c pour créer une nouvelle entrée\n e pour exporter les mots de passe en csv, i pour en importer\n q pour quitter\n");
         scanf(" %c", &slect);
 
         switch (slect) {
@@ -100,31 +98,89 @@ int main(int argc, char* argv[]) {
 
                 scdptr = select_mdp(first, input);
                 affiche_mdp(scdptr);
-                printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password / j to copy login\n");
-                scanf(" %c", &slect);
+                if(scdptr !=NULL){
+                    printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password\n");
+                    scanf(" %c", &slect);
 
-                if (slect == 'd') {
-                    first = delpasswd(scdptr, first);
-                } else if (slect == 'm') {
-                    modify_pswd(scdptr);
+                    if (slect == 'd') {
+                        first = delpasswd(scdptr, first);
+                    } else if (slect == 'm') {
+                        modify_pswd(scdptr);
+                    }
+                    else if (slect == 'h')
+                    {
+                        copy_to_clipboard(scdptr->Password);
+                    }
+                    
                 }
-                else if (slect == 'h')
+                else
                 {
-                    copy_to_clipboard(scdptr->Password);
+                    printf("aucune corresondace\n");
                 }
-                else if (slect == 'j')
-                {
-                    copy_to_clipboard(scdptr->Login);
-                }
-                
                 
                 break;
+            case 'p':
 
+                scdptr = select_mdp_ask(first);
+                affiche_mdp(scdptr);
+                if(scdptr != NULL){
+                    printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password\n");
+                    scanf(" %c", &slect);
+
+                    if (slect == 'd') {
+                        first = delpasswd(scdptr, first);
+                    } else if (slect == 'm') {
+                        modify_pswd(scdptr);
+                    }
+                    else if (slect == 'h')
+                    {
+                        copy_to_clipboard(scdptr->Password);
+                    }
+                    
+                }
+                else{
+                    printf("aucune corresondace\n");
+                }
+                break;
+            case 'n':
+
+                scdptr = select_mdp_ask_login(first);
+                affiche_mdp(scdptr);
+                if(scdptr != NULL){
+                    printf("Que voulez-vous faire ? d pour supprimer / m pour modifier / h to copy password\n");
+                    scanf(" %c", &slect);
+
+                    if (slect == 'd') {
+                        first = delpasswd(scdptr, first);
+                    } else if (slect == 'm') {
+                        modify_pswd(scdptr);
+                    }
+                    else if (slect == 'h')
+                    {
+                        copy_to_clipboard(scdptr->Password);
+                    }
+                    
+                }
+                else{
+                    printf("aucune corresondace\n");
+                }
+                break;
             case 'c':
                 dabet++;
                 first = pass_query(dabet, first);
                 break;
-
+            case 'e':
+                save_list_to_csv(first, "export.csv");
+                break;
+            
+            case 'i':
+                printf("enter the name of the file you wish to import ");
+                scanf("%s", namefile);
+                
+                load_from_csv(&first, namefile);
+              
+                dabet = find_max(first);
+                break;
             case 'q':
                 loop = 0;
                 break;
@@ -135,7 +191,7 @@ int main(int argc, char* argv[]) {
     fdecrypted = fopen("decrypted", "wb");
     if (fdecrypted == NULL) {
         fprintf(stderr, "Erreur : impossible d'ouvrir le fichier décrypté pour écriture.\n");
-        liberer_mots_de_passe(first);
+        free_mots_de_passe(first);
         if (ivpointer) free(ivpointer);
         return 1;
     }
@@ -150,7 +206,7 @@ int main(int argc, char* argv[]) {
         ivpointer = (ij_vc*) malloc(sizeof(ij_vc));
         if (ivpointer == NULL) {
             fprintf(stderr, "Erreur d'allocation de mémoire pour ivpointer.\n");
-            liberer_mots_de_passe(first);
+            free_mots_de_passe(first);
             return 1;
         }
         
@@ -160,7 +216,7 @@ int main(int argc, char* argv[]) {
         if (fiv == NULL) {
             fprintf(stderr, "Erreur : impossible de créer le fichier IV.\n");
             free(ivpointer);
-            liberer_mots_de_passe(first);
+            free_mots_de_passe(first);
             return 1;
         }
         fwrite(ivpointer, sizeof(ij_vc), 1, fiv);
@@ -185,14 +241,14 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Erreur : impossible d'ouvrir les fichiers pour le chiffrement.\n");
         if (fp) fclose(fp);
         if (fdecrypted) fclose(fdecrypted);
-        liberer_mots_de_passe(first);
+        free_mots_de_passe(first);
         if (ivpointer) free(ivpointer);
         return 1;
     }
     aes_encrypt_file(fdecrypted, fp, key, ivpointer->IV);
 
     // Libération des ressources
-    liberer_mots_de_passe(first);
+    free_mots_de_passe(first);
     if (ivpointer) free(ivpointer);
     remove("decrypted");
     return 0;

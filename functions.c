@@ -65,7 +65,13 @@ void copy_to_clipboard(const char *arr) {
 }
 
 Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
-    printf("Pour quel site est ce mot de passe ?\n");
+    char t;
+    printf("Voulez vous génerer un mot de passe aléatoire? y/n\n");
+    scanf(" %c", &t);
+    int rand = 0;
+    if(t =='y'){
+        rand = 1;
+    }
     Mot_de_passe* ptr = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
     if (ptr == NULL) {
         perror("Erreur d'allocation de mémoire");
@@ -78,9 +84,13 @@ Mot_de_passe* pass_query(int ID, Mot_de_passe* ancin) {
     
     printf("Login : ");
     scanf("%29s", ptr->Login);
-    
-    printf("Mot de passe : ");
-    scanf("%29s", ptr->Password);
+    if(!rand){
+        printf("Mot de passe : ");
+        scanf("%29s", ptr->Password);
+    }
+    else{
+        random_passwd(ptr);
+    }
     
     printf("Commentaires : ");
     scanf("%255s", ptr->Commentaire);
@@ -137,7 +147,7 @@ ij_vc* get_cipher(FILE* fp) {
 }
 
 
-void liberer_mots_de_passe(Mot_de_passe* liste) {
+void free_mots_de_passe(Mot_de_passe* liste) {
     Mot_de_passe* courant;
     while (liste != NULL) {
         courant = liste;
@@ -160,13 +170,43 @@ void affiche_mdp(Mot_de_passe* mdp) {
     
 
     // Affichage des informations du mot de passe
-    printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\ncommentaires : %s\n",
-           mdp->ID, mdp->creation, mdp->modif, mdp->Site, mdp->Commentaire);
+    printf("Entrée %d :\ndate d'ajout : %s\ndate de modif : %s\nsite : %s\nlogin : %s\ncommentaires : %s\n",
+           mdp->ID, mdp->creation, mdp->modif, mdp->Site,mdp->Login, mdp->Commentaire);
     
 }
 
+void save_list_to_csv(Mot_de_passe* head, const char* filename) {
+    // Ouvrir le fichier en mode écriture
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Erreur lors de l'ouverture du fichier CSV");
+        return;
+    }
 
+    // Écrire l'en-tête des colonnes dans le fichier CSV
+    //fprintf(file, "ID,Login,Password,Site,Commentaire,Creation,Modification\n");
 
+    // Parcourir la liste et écrire chaque élément dans le fichier
+    Mot_de_passe* current = head;
+    while (current != NULL) {
+        // Échapper les virgules dans les commentaires ou autres champs si nécessaire
+        fprintf(file, "%d,%s,%s,%s,%s,%s,%s\n",
+                current->ID,
+                current->Login,
+                current->Password,
+                current->Site,
+                current->Commentaire,
+                current->creation,
+                current->modif);
+        
+        // Passer au prochain élément dans la liste
+        current = current->ptr;
+    }
+
+    // Fermer le fichier
+    fclose(file);
+    printf("Liste sauvegardée dans %s\n", filename);
+}
 
 void affiche_list(Mot_de_passe* mdp){
 	Mot_de_passe* tmp = mdp;
@@ -181,6 +221,28 @@ void affiche_list(Mot_de_passe* mdp){
 Mot_de_passe* select_mdp(Mot_de_passe* hea, int idex){
     Mot_de_passe* head =hea;
 	while (head != NULL && head->ID != idex){
+        head = head->ptr;
+    }
+    return head;
+}
+
+Mot_de_passe* select_mdp_ask(Mot_de_passe* hea){
+    Mot_de_passe* head =hea;
+    printf("\nentrez le site pour lequel vous souhaitez prendre le mot de passe\n");
+    char entre[50];
+    scanf("%s", entre);
+	while (head != NULL && strcmp(head->Site, entre)){
+        head = head->ptr;
+    }
+    return head;
+}
+
+Mot_de_passe* select_mdp_ask_login(Mot_de_passe* hea){
+    Mot_de_passe* head =hea;
+    printf("\nentrez le login pour lequel vous souhaitez prendre le mot de passe\n");
+    char entre[50];
+    scanf("%s", entre);
+	while (head != NULL && strcmp(head->Login, entre)){
         head = head->ptr;
     }
     return head;
@@ -513,4 +575,100 @@ int aes_encrypt_file(FILE *ifp, FILE *ofp, const unsigned char *key, const unsig
     free(ciphertext);
 
     return cipherlen;  // Retourner la taille des données chiffrées
+}
+
+// Fonction pour trouver le plus grand ID dans la liste
+// Fonction pour charger les mots de passe depuis un fichier CSV
+void load_from_csv(Mot_de_passe** head, const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return;
+    }
+
+    char line[512];
+    int max_id = find_max(*head); // Trouver le plus grand ID déjà existant dans la liste
+
+    // Lire la première ligne (les en-têtes) et ignorer
+   
+    while (fgets(line, sizeof(line), file)) {
+        // Variables pour stocker les champs du CSV
+        Mot_de_passe* new_node = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
+        if (new_node == NULL) {
+            perror("Erreur d'allocation de mémoire");
+            fclose(file);
+            return;
+        }
+
+        // Utilisation de sscanf pour lire les champs du CSV
+        
+        sscanf(line, "%d,%29[^,],%29[^,],%49[^,],%255[^,],%19[^,],%19[^\n]",
+               &new_node->ID, new_node->Login, new_node->Password, new_node->Site, 
+               new_node->Commentaire, new_node->creation, new_node->modif);
+
+        // Vérifier si l'ID importé est inférieur à max_id (dabet)
+        if (new_node->ID <= max_id) {
+            max_id ++;
+            new_node->ID = max_id;  // Si l'ID importé est inférieur ou égal à max_id, on le met à jour
+        }
+
+        // Mettre à jour l'ID du mot de passe
+       
+        new_node->ptr = NULL;
+
+        // Ajouter le nouveau mot de passe à la liste
+        if (*head == NULL) {
+            *head = new_node;  // Si la liste est vide, le premier élément devient head
+        } else {
+            Mot_de_passe* temp = *head;
+            while (temp->ptr != NULL) {
+                temp = temp->ptr;  // Parcours jusqu'à la fin de la liste
+            }
+            temp->ptr = new_node;  // Ajout du nouveau noeud à la fin de la liste
+        }
+
+        // Mettre à jour max_id pour la prochaine itération
+        max_id = find_max(*head);
+        //il se peut que ça skip des valeurs mais l'interet de ID c'est juste qu'il soit unique pas forcément que ça soit dans l'ordre numérique
+    }
+
+    fclose(file);
+}
+
+int find_max(Mot_de_passe* head) {
+    int max_id = 0; //initialise a 0
+    Mot_de_passe* current = head;
+
+    // Parcourt la liste pour trouver le plus grand ID
+    while (current != NULL) {
+        if (current->ID > max_id) {
+            max_id = current->ID;
+        }
+        current = current->ptr;
+    }
+
+    return max_id;
+}
+
+void random_passwd(Mot_de_passe* mdp) {
+    int l;
+    printf("Select the length of your pass (min 12): ");
+    scanf("%d", &l);
+    if (l < 12) {
+        l = 12;
+    }
+    if(l>28){
+        l=28;
+    }
+
+    int c;
+    const char allowed[] = "azertyuiopqsdfghjklmwxcvbn?.!§^1234567890)=àç_è-(é&ù~@]}{[|#²AZERTYUIOPMLKJHGFDSQWXCVBN*µ<>";
+
+    srand(time(NULL));
+
+    for (int i = 0; i < l; i++) {
+        c = rand() % strlen(allowed);  // Utiliser la longueur de `allowed`
+        mdp->Password[i] = allowed[c];  // Assignation du caractère
+    }
+    mdp->Password[l] = '\0';  // Ajouter le caractère de fin de chaîne
 }
