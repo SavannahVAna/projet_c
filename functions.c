@@ -278,7 +278,13 @@ Mot_de_passe* recup_list(FILE* fiel) {//recupérer la liste des mots de passe da
 
 
 void enregister(Mot_de_passe* mdp, FILE* file) {//enregisteer la liste dans le fichier
-    Mot_de_passe* ptr1 = mdp;
+    Mot_de_passe* ptr1 = (Mot_de_passe*)malloc(sizeof(Mot_de_passe));
+    if (ptr1 == NULL) {
+        perror("Erreur d'allocation mémoire");
+        return;
+    }
+    memset(ptr1, 0, sizeof(Mot_de_passe));  // Initialise toute la structure à zéro
+    ptr1 = mdp;
     while (ptr1 != NULL) {
         printf("Enregistrement ID: %d, Site: %s\n", ptr1->ID, ptr1->Site);//enregistre chaque element jusqu'au dernier
         fwrite(ptr1, sizeof(Mot_de_passe), 1, file);
